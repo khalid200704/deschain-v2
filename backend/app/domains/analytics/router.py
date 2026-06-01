@@ -165,7 +165,7 @@ async def get_credit_trail(
     umkm = db.query(UMKM).filter(UMKM.user_id == user_id).first()
 
     if not umkm:
-        return {"success": True, "data": _demo_credit_trail()}
+        return {"success": True, "data": _demo_credit_trail(), "is_demo": True}
 
     # Combine procurement requests + group memberships into a timeline
     trail = []
@@ -213,9 +213,9 @@ async def get_credit_trail(
 
     trail.sort(key=lambda x: (x["date"] or ""), reverse=True)
     if not trail:
-        return {"success": True, "data": _demo_credit_trail()}
+        return {"success": True, "data": _demo_credit_trail(), "is_demo": True}
 
-    return {"success": True, "data": trail[:15]}
+    return {"success": True, "data": trail[:15], "is_demo": False}
 
 
 @router.get("/savings")

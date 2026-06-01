@@ -23,7 +23,7 @@ const DashboardPage = () => {
       icon: ShoppingCart,
       title: 'Buat Permintaan',
       desc: 'Ajukan kebutuhan baru untuk dicocokkan',
-      path: '/procurement/matching',
+      path: '/procurement',
       color: 'hover:border-blue-200 hover:bg-blue-50',
     },
     {

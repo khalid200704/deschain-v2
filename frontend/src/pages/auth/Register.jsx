@@ -18,6 +18,9 @@ const RegisterPage = () => {
       if (response.success) {
         setToken(response.data.access_token)
         setUser(response.data.user)
+        if (response.data.refresh_token) {
+          localStorage.setItem('refreshToken', response.data.refresh_token)
+        }
         navigate('/dashboard')
       }
     } catch (error) {

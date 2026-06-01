@@ -23,6 +23,16 @@ import ConsultationPage from './pages/Consultation'
 import './index.css'
 
 function App() {
+  React.useEffect(() => {
+    const pingBackend = () => {
+      fetch(`${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}/ping`)
+        .catch(() => {})
+    }
+    pingBackend()
+    const interval = setInterval(pingBackend, 10 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <ErrorBoundary>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>

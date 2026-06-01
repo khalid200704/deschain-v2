@@ -10,18 +10,32 @@ export const LoginForm = () => {
   const navigate = useNavigate()
   const { setUser, setToken } = useAuthStore()
   const [apiError, setApiError] = React.useState('')
+  const [isSlowLoading, setIsSlowLoading] = React.useState(false)
 
   const onSubmit = async (data) => {
     setApiError('')
+    setIsSlowLoading(false)
+    const slowTimer = setTimeout(() => setIsSlowLoading(true), 3000)
     try {
       const response = await authAPI.login(data.email, data.password)
+      clearTimeout(slowTimer)
       if (response.success) {
         setToken(response.data.access_token)
         setUser(response.data.user)
+        if (response.data.refresh_token) {
+          localStorage.setItem('refreshToken', response.data.refresh_token)
+        }
         navigate('/dashboard')
       }
     } catch (error) {
-      setApiError(error?.detail || error?.message || 'Email atau password salah.')
+      clearTimeout(slowTimer)
+      setIsSlowLoading(false)
+      setApiError(
+        error?.detail ||
+        error?.message ||
+        error?.error?.message ||
+        'Email atau password salah. Coba lagi.'
+      )
     }
   }
 
@@ -76,7 +90,16 @@ export const LoginForm = () => {
           disabled={isSubmitting}
           className="w-full py-2.5 bg-gold-500 text-white font-semibold rounded-xl hover:bg-gold-600 transition-colors disabled:opacity-50 text-sm mt-2"
         >
-          {isSubmitting ? 'Memproses...' : 'Masuk'}
+          {isSubmitting ? (
+            <div className="text-center">
+              <span className="block">{isSlowLoading ? 'Membangunkan server...' : 'Memproses...'}</span>
+              {isSlowLoading && (
+                <span className="text-xs text-white text-opacity-75 block mt-0.5">
+                  Server sedang aktif, mohon tunggu ~30 detik
+                </span>
+              )}
+            </div>
+          ) : 'Masuk'}
         </button>
       </form>
 

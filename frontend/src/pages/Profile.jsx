@@ -45,7 +45,7 @@ const Profile = () => {
     setSaveError('')
     try {
       const res = await authAPI.updateProfile(form)
-      setUser(res.data.data)
+      setUser(res.data)
       setSaveSuccess(true)
       setTimeout(() => { setEditMode(false); setSaveSuccess(false) }, 1200)
     } catch (err) {

@@ -116,10 +116,16 @@ const TRAIL_STYLES = {
 export const CreditTrail = () => {
   const [trail, setTrail] = React.useState([])
   const [loading, setLoading] = React.useState(true)
+  const [isDemo, setIsDemo] = React.useState(false)
 
   React.useEffect(() => {
     analyticsAPI.getCreditTrail()
-      .then((res) => { if (res.success) setTrail(res.data) })
+      .then((res) => {
+        if (res.success) {
+          setTrail(res.data)
+          setIsDemo(res.is_demo || false)
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
@@ -139,7 +145,17 @@ export const CreditTrail = () => {
   return (
     <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-sm font-semibold text-navy-900">Credit Trail</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-navy-900">Credit Trail</h3>
+          {isDemo ? (
+            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Demo</span>
+          ) : (
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+              Data Nyata
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-1.5 text-xs text-gray-400">
           <Clock size={12} />
           Riwayat Pengadaan
@@ -173,6 +189,11 @@ export const CreditTrail = () => {
             )
           })}
         </div>
+      )}
+      {isDemo && (
+        <p className="text-xs text-amber-600 mt-3 text-center">
+          💡 Bergabung ke grup pengadaan untuk memulai credit trail nyata Anda
+        </p>
       )}
     </div>
   )

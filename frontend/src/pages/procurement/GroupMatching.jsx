@@ -36,24 +36,29 @@ const GroupMatching = () => {
   })
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState(null)
-  const [error, setError] = useState('')
+  const [errors, setErrors] = useState({})
   const [joining, setJoining] = useState(null)
   const [joined, setJoined] = useState({})
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
-    setError('')
+    if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: '' })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.product_name || !form.quantity || !form.budget) {
-      setError('Nama produk, kuantitas, dan budget wajib diisi.')
+    const newErrors = {}
+    if (!form.product_name.trim()) newErrors.product_name = 'Nama produk wajib diisi'
+    if (!form.quantity || parseFloat(form.quantity) <= 0) newErrors.quantity = 'Kuantitas harus lebih dari 0'
+    if (!form.budget || parseFloat(form.budget) <= 0) newErrors.budget = 'Budget harus lebih dari 0'
+    if (!form.delivery_city.trim()) newErrors.delivery_city = 'Kota pengiriman wajib diisi'
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
       return
     }
+    setErrors({})
     setLoading(true)
     setResults(null)
-    setError('')
     try {
       const res = await apiClient.post('/matching/groups/match', {
         ...form,
@@ -61,9 +66,9 @@ const GroupMatching = () => {
         budget: parseFloat(form.budget),
       })
       if (res.success) setResults(res.data)
-      else setError(res.message || 'Gagal mencari grup.')
+      else setErrors({ general: res.message || 'Gagal mencari grup.' })
     } catch (err) {
-      setError(err?.detail || 'Gagal mencari grup. Pastikan Anda sudah login.')
+      setErrors({ general: err?.detail || 'Gagal mencari grup. Pastikan Anda sudah login.' })
     } finally {
       setLoading(false)
     }
@@ -86,10 +91,10 @@ const GroupMatching = () => {
       if (res.success) {
         setJoined((prev) => ({ ...prev, [group.id]: res.data }))
       } else {
-        setError(res.message || 'Gagal bergabung.')
+        setErrors({ general: res.message || 'Gagal bergabung.' })
       }
     } catch (err) {
-      setError(err?.detail || 'Gagal bergabung ke grup.')
+      setErrors({ general: err?.detail || 'Gagal bergabung ke grup.' })
     } finally {
       setJoining(null)
     }
@@ -124,6 +129,7 @@ const GroupMatching = () => {
                     placeholder="cth: Beras Premium Pandan Wangi"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gold-500 text-sm"
                   />
+                  {errors.product_name && <p className="text-red-500 text-xs mt-1">{errors.product_name}</p>}
                 </div>
 
                 <div>
@@ -150,6 +156,7 @@ const GroupMatching = () => {
                       placeholder="100"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gold-500 text-sm"
                     />
+                    {errors.quantity && <p className="text-red-500 text-xs mt-1">{errors.quantity}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-navy-900 mb-1">Satuan</label>
@@ -180,6 +187,7 @@ const GroupMatching = () => {
                       Rp {parseInt(form.budget).toLocaleString('id-ID')}
                     </p>
                   )}
+                  {errors.budget && <p className="text-red-500 text-xs mt-1">{errors.budget}</p>}
                 </div>
 
                 <div>
@@ -191,6 +199,7 @@ const GroupMatching = () => {
                     placeholder="Pontianak"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gold-500 text-sm"
                   />
+                  {errors.delivery_city && <p className="text-red-500 text-xs mt-1">{errors.delivery_city}</p>}
                 </div>
 
                 <div>
@@ -212,9 +221,9 @@ const GroupMatching = () => {
                   </div>
                 </div>
 
-                {error && (
+                {errors.general && (
                   <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-lg">
-                    {error}
+                    {errors.general}
                   </div>
                 )}
 

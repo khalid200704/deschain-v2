@@ -1,8 +1,9 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useAuthStore } from '../../stores'
+import { useAuthStore, useNotificationStore } from '../../stores'
+import { notificationAPI } from '../../api/endpoints'
 import {
-  LayoutDashboard, Users, ShoppingCart, Store, CreditCard, User, LogOut, MessageCircle
+  LayoutDashboard, Users, ShoppingCart, Store, CreditCard, User, LogOut, MessageCircle, Bell
 } from 'lucide-react'
 
 const menuItems = [
@@ -18,6 +19,25 @@ const menuItems = [
 export const Navbar = () => {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
+  const { notifications, unreadCount, setNotifications } = useNotificationStore()
+  const [showNotif, setShowNotif] = React.useState(false)
+
+  React.useEffect(() => {
+    if (user) {
+      notificationAPI.list()
+        .then(res => { if (res.success) setNotifications(res.data) })
+        .catch(() => {})
+    }
+  }, [user])
+
+  React.useEffect(() => {
+    if (!showNotif) return
+    const handler = (e) => {
+      if (!e.target.closest('.notif-dropdown')) setShowNotif(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showNotif])
 
   return (
     <nav className="bg-navy-900 text-white px-6 py-4 shadow-md">
@@ -30,6 +50,42 @@ export const Navbar = () => {
         </span>
         {user && (
           <div className="flex items-center gap-3">
+            <div className="notif-dropdown relative">
+              <button
+                onClick={() => setShowNotif(v => !v)}
+                className="relative p-2 bg-white bg-opacity-10 hover:bg-opacity-20 rounded-lg transition-colors"
+              >
+                <Bell size={16} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-gold-500 rounded-full text-xs flex items-center justify-center font-bold text-white leading-none">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotif && (
+                <div className="absolute right-0 top-10 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <span className="text-sm font-semibold text-navy-900">Notifikasi</span>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto divide-y divide-gray-50">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-gray-400 text-sm">
+                        Tidak ada notifikasi
+                      </div>
+                    ) : (
+                      notifications.slice(0, 5).map(n => (
+                        <div key={n.id} className={`px-4 py-3 text-sm ${!n.is_read ? 'bg-blue-50' : ''}`}>
+                          <div className="font-medium text-navy-900">{n.title}</div>
+                          <div className="text-gray-500 text-xs mt-0.5 line-clamp-2">{n.message}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <span className="text-sm text-gray-300 hidden sm:block">
               {user.first_name} {user.last_name}
             </span>
@@ -60,7 +116,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
           onClick={onClose}
         />
       )}
-      <aside className={`bg-navy-900 text-white fixed left-0 top-[65px] bottom-0 w-60 z-40 flex flex-col transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`bg-navy-900 text-white fixed left-0 top-[65px] bottom-0 w-60 z-40 flex flex-col transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {menuItems
             .filter(item => item.roles.includes(user?.user_type))
@@ -97,7 +153,7 @@ export const DashboardLayout = ({ children, sidebarOpen, onToggle }) => (
     <Navbar />
     <div className="flex">
       <Sidebar isOpen={sidebarOpen} onClose={onToggle} />
-      <main className={`flex-1 min-w-0 p-6 transition-all duration-300 ${sidebarOpen ? 'lg:ml-60' : 'ml-0'}`}>
+      <main className="flex-1 min-w-0 p-6 lg:ml-60 transition-all duration-300">
         {children}
       </main>
     </div>

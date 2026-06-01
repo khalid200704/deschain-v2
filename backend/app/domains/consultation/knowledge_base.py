@@ -5,8 +5,20 @@ import re
 import os
 from pathlib import Path
 
-# Path ke knowledge base file
-KB_PATH = Path(__file__).parent.parent.parent.parent.parent / "knowledge base Deschain.md"
+def _find_kb_file() -> Path:
+    """Cari file knowledge base di beberapa lokasi yang mungkin"""
+    candidates = [
+        Path(__file__).parent.parent.parent.parent.parent / "knowledge base Deschain.md",
+        Path(os.getcwd()) / "knowledge base Deschain.md",
+        Path(os.getcwd()) / ".." / "knowledge base Deschain.md",
+        Path(__file__).parent.parent.parent.parent.parent / "kb-1-pengadaan.md",
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    return candidates[0]
+
+KB_PATH = _find_kb_file()
 
 
 def load_chunks() -> list[dict]:

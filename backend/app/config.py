@@ -35,8 +35,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list = [
         "http://localhost:5173",
         "http://localhost:3000",
-        "http://10.10.10.76:5173",
-        "http://192.168.110.250:5173",
+        "https://deschain-v2.vercel.app",
     ]
     CORS_CREDENTIALS: bool = True
     CORS_METHODS: list = ["*"]

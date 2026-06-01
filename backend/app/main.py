@@ -56,7 +56,7 @@ app.add_middleware(
 # Trusted hosts
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "10.10.10.76", "192.168.110.250", "*.deschain.id", "*.vercel.app", "*.railway.app", "*.up.railway.app", "*.hf.space"],
+    allowed_hosts=["localhost", "127.0.0.1", "*.deschain.id", "*.vercel.app", "*.hf.space", "*.huggingface.co"],
 )
 
 
@@ -91,6 +91,12 @@ app.include_router(vendor_router, prefix=f"{settings.API_V1_PREFIX}/vendors", ta
 app.include_router(transaction_router, prefix=f"{settings.API_V1_PREFIX}/transactions", tags=["Transaksi"])
 app.include_router(admin_router, prefix=f"{settings.API_V1_PREFIX}/admin", tags=["Admin"])
 app.include_router(consultation_router, prefix=f"{settings.API_V1_PREFIX}/consultation", tags=["Konsultasi AI"])
+
+
+@app.get("/ping")
+async def ping():
+    """Lightweight ping untuk keep-alive HF Space"""
+    return {"pong": True}
 
 
 @app.get("/health")

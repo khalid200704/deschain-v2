@@ -112,9 +112,10 @@ npm run dev
 - ✅ Credit trail analytics
 - ✅ Dashboard with metrics
 - ✅ Mobile-responsive design
+- ✅ AI group matching (similarity scoring: kategori, lokasi, budget, urgency)
+- ✅ AI consultation chatbot (RAG: TF-IDF retrieval + Claude Haiku / Groq)
 
 ### Future Features
-- 🔮 AI automatic group matching
 - 🔮 Advanced recommendation engine
 - 🔮 WhatsApp integration
 - 🔮 Credit scoring for financing
@@ -194,10 +195,10 @@ Full documentation: [API_DESIGN.md](docs/API_DESIGN.md)
 
 The matching service intelligently groups similar procurement requests:
 
-1. **Product Similarity** (40%): Text-based matching
-2. **Temporal Alignment** (25%): Delivery date compatibility
-3. **Geographic Proximity** (20%): Location-based grouping
-4. **Volume Aggregation** (15%): Bulk purchase potential
+1. **Kesamaan kategori produk** (40%): String matching
+2. **Kesamaan kota pengiriman** (30%): City matching
+3. **Kesesuaian budget** (20%): Ratio-based scoring
+4. **Kesamaan urgency** (10%): Exact match
 
 Example:
 - Request A: 100kg Rice, Bandung, June 10
@@ -205,6 +206,20 @@ Example:
 - Similarity Score: 0.92 → Grouped with 12% bulk discount
 
 Details: [AI_MATCHING.md](docs/AI_MATCHING.md)
+
+## 🧠 AI Consultation (RAG)
+
+Fitur konsultasi menggunakan Retrieval-Augmented Generation (RAG):
+
+1. **Retrieval**: TF-IDF + cosine similarity mengambil top-3 chunk relevan
+   dari knowledge base 7 topik (pengadaan, KUR, OJK/BI, pemasaran, keuangan)
+2. **Generation**: Claude Haiku / Groq llama-3.1-8b sebagai LLM
+3. **Fine-tuned fallback**: Model Qwen2.5-1.5B lokal via Ollama (offline-capable)
+4. **Knowledge base**: 100+ data points regulasi OJK/BI terkini (2024–2026),
+   termasuk POJK No. 29/2024 (ICS) dan POJK No. 11/2024 (SLIK fintech)
+
+Relevansi ke tema hackathon: credit trail Deschain berpotensi menjadi
+**data alternatif untuk ICS (Innovative Credit Scoring)** sesuai POJK No. 29/2024.
 
 ## 💾 Database
 
@@ -338,7 +353,7 @@ Built with ❤️ for Indonesian UMKM
 |-------|--------|----------|
 | **Phase 0: Foundation** | ✅ Complete | Weeks 1-2 |
 | **Phase 1: MVP Core** | 🔨 In Progress | Weeks 3-6 |
-| **Phase 2: AI Features** | 📋 Planned | Weeks 7-10 |
+| **Phase 2: AI Features** | 🔨 In Progress | Weeks 7-10 |
 | **Phase 3: Polish** | 📋 Planned | Weeks 11-12 |
 | **Phase 4: Deploy** | 📋 Planned | Weeks 13+ |
 

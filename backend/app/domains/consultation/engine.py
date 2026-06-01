@@ -2,10 +2,13 @@
 Consultation engine — TF-IDF retrieval + Claude Haiku response generation (RAG)
 """
 import re
+import structlog
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from .knowledge_base import load_chunks
+
+logger = structlog.get_logger()
 
 # ── Load & index saat module dimuat ──────────────────────────────
 _chunks = load_chunks()
@@ -31,6 +34,24 @@ Aturan menjawab:
 - Jangan sebut bahwa kamu menggunakan "knowledge base" atau "konteks" — langsung jawab saja
 - Jika informasi tidak ada dalam konteks, jawab jujur bahwa kamu belum punya informasi tersebut
 - Jangan memberikan nasihat hukum atau keuangan yang bersifat final — selalu anjurkan konsultasi profesional untuk keputusan besar"""
+
+def _check_api_keys():
+    from app.config import get_settings
+    settings = get_settings()
+    active = []
+    if settings.GROQ_API_KEY:
+        active.append("Groq (llama-3.1-8b-instant)")
+    if settings.ANTHROPIC_API_KEY:
+        active.append("Claude Haiku")
+    if active:
+        logger.info("consultation_llm_active", providers=active)
+    else:
+        logger.warning(
+            "consultation_no_llm_key",
+            message="Tidak ada GROQ_API_KEY atau ANTHROPIC_API_KEY. Consultation akan pakai template fallback."
+        )
+
+_check_api_keys()
 
 _GREETINGS = {
     "halo", "hai", "hi", "hello", "hei", "hey",

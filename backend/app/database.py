@@ -20,10 +20,12 @@ if _is_sqlite:
 else:
     engine = create_engine(
         settings.DATABASE_URL,
-        poolclass=QueuePool,
-        pool_size=settings.DATABASE_POOL_SIZE,
-        max_overflow=settings.DATABASE_MAX_OVERFLOW,
+        poolclass=NullPool,
         pool_pre_ping=True,
+        connect_args={
+            "connect_timeout": 10,
+            "options": "-c statement_timeout=30000",
+        },
         echo=settings.DEBUG,
     )
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { DashboardLayout } from '../../components/layouts'
 import { useUIStore } from '../../stores'
 import { ProtectedRoute } from '../../components/common/ProtectedRoute'
-import { Menu, Plus, Search, Clock, CheckCircle, AlertCircle, XCircle } from 'lucide-react'
+import { Menu, Plus, Search, Clock, CheckCircle, AlertCircle, XCircle, Users } from 'lucide-react'
 import apiClient from '../../api/client'
 
 const STATUS_MAP = {
@@ -111,6 +111,15 @@ const Procurement = () => {
                         <div className="text-xs text-gray-400 mt-0.5">
                           {req.quantity} {req.unit} &middot; {req.delivery_city}
                         </div>
+                        {(req.status === 'active' || req.status === 'draft') && (
+                          <button
+                            onClick={() => navigate('/procurement/matching')}
+                            className="mt-2 text-xs text-gold-500 font-medium hover:underline flex items-center gap-1"
+                          >
+                            <Users size={11} />
+                            Cari Grup AI →
+                          </button>
+                        )}
                       </div>
                       <div className="text-right flex-shrink-0">
                         <div className="font-semibold text-navy-900 text-sm">Rp {fmt(req.budget)}</div>

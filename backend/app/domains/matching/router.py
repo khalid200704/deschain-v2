@@ -21,24 +21,44 @@ router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
 
-def _compute_similarity(req_a: ProcurementRequest, req_b: ProcurementRequest) -> float:
+def _jaccard(a: str, b: str) -> float:
+    """Hitung Jaccard similarity antara dua string berdasarkan kata-kata"""
+    set_a = set(a.lower().split())
+    set_b = set(b.lower().split())
+    if not set_a or not set_b:
+        return 0.0
+    intersection = set_a & set_b
+    union = set_a | set_b
+    return len(intersection) / len(union)
+
+
+def _compute_similarity(req_a, req_b) -> float:
     """
     Hitung skor kesamaan antara dua permintaan pengadaan.
     Faktor: kategori produk (40%), kota (30%), budget range (20%), urgency (10%)
     """
     score = 0.0
 
-    # Kesamaan kategori produk (bobot 40%)
+    # Kesamaan kategori produk (bobot 40%) — Jaccard word overlap
     if req_a.product_category and req_b.product_category:
-        if req_a.product_category.lower() == req_b.product_category.lower():
+        cat_sim = _jaccard(req_a.product_category, req_b.product_category)
+        if cat_sim >= 0.8:
             score += 0.40
+        elif cat_sim >= 0.4:
+            score += 0.25
+        elif cat_sim >= 0.2:
+            score += 0.15
         elif req_a.product_category.lower()[:4] == req_b.product_category.lower()[:4]:
-            score += 0.20
+            score += 0.10
 
-    # Kesamaan kota (bobot 30%)
+    # Kesamaan kota (bobot 30%) — exact + partial match
     if req_a.delivery_city and req_b.delivery_city:
-        if req_a.delivery_city.lower() == req_b.delivery_city.lower():
+        city_a = req_a.delivery_city.lower().strip()
+        city_b = req_b.delivery_city.lower().strip()
+        if city_a == city_b:
             score += 0.30
+        elif city_a in city_b or city_b in city_a:
+            score += 0.15
 
     # Budget dalam range yang serupa (bobot 20%)
     if req_a.budget and req_b.budget and req_a.budget > 0:

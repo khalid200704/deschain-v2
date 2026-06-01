@@ -203,6 +203,8 @@ def seed():
     grp3 = mk_group("Grup Tepung Bakeri Kalimantan", "Sembako", 1200, "kg", 14_400_000, "Pontianak", umkm3.id, vendor1.id, 3, 2_160_000, "completed", 15)
     grp4 = mk_group("Grup Sembako Aktif Q2", "Sembako", 600, "kg", 9_000_000, "Pontianak", demo_umkm.id, None, 3, 0, "forming", 5)
     grp5 = mk_group("Grup Bahan Bangunan Singkawang", "Bahan Bangunan", 500, "karton", 30_000_000, "Singkawang", umkm4.id, vendor3.id, 6, 4_500_000, "completed", 60)
+    grp6 = mk_group("Grup Beras Pontianak Tengah", "Beras & Biji-bijian", 900, "kg", 13_500_000, "Pontianak", umkm2.id, None, 2, 0, "forming", 3)
+    grp7 = mk_group("Kolektif Minyak Goreng Pontianak", "Minyak & Lemak", 400, "karton", 12_800_000, "Pontianak", umkm5.id, None, 2, 0, "forming", 2)
 
     db.flush()
 
@@ -299,16 +301,16 @@ def seed():
         db.add(n)
 
     db.commit()
-    print("Seed berhasil! Data demo telah dibuat.")
-    print()
-    print("Demo Credentials:")
-    print("  Admin  : admin@deschain.id  / Admin1234!")
-    print("  UMKM   : demo@deschain.id   / Demo1234!")
-    print("  Vendor : vendor@deschain.id / Demo1234!")
-    print()
-    print("UMKM tambahan (semua password: Demo1234!):")
-    print("  siti.warung@gmail.com, berkah.toko@gmail.com, maju.jaya@gmail.com")
-    print("  rizki.catering@gmail.com, harapan.usaha@gmail.com")
+
+    print("\n=== SEED BERHASIL ===")
+    print(f"Demo UMKM  : demo@deschain.id / Demo1234!")
+    print(f"Demo Vendor: vendor@deschain.id / Demo1234!")
+    print(f"Total users   : {db.query(User).count()}")
+    print(f"Total UMKM    : {db.query(UMKM).count()}")
+    print(f"Total Vendor  : {db.query(Vendor).count()}")
+    print(f"Total Grup    : {db.query(ProcurementGroup).count()}")
+    print(f"Total Request : {db.query(ProcurementRequest).count()}")
+    print("====================\n")
 
 
 if __name__ == "__main__":
