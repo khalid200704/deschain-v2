@@ -6,6 +6,7 @@ python-dotenv==1.0.1
 # Database
 sqlalchemy==2.0.41
 alembic==1.15.2
+psycopg2-binary==2.9.9
 
 # Authentication & Security
 pyjwt==2.10.1
