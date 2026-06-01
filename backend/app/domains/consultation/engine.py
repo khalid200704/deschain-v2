@@ -47,7 +47,7 @@ def retrieve(query: str, top_k: int = 3) -> list[dict]:
     top_idx = scores.argsort()[::-1][:top_k]
     results = []
     for idx in top_idx:
-        if scores[idx] > 0.05:
+        if scores[idx] > 0.01:
             results.append({**_chunks[idx], "score": float(scores[idx])})
     return results
 
