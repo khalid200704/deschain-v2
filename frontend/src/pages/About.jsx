@@ -79,7 +79,7 @@ const ROADMAP = [
 ]
 
 const ACHIEVEMENTS = [
-  { icon: Award,       iconCls: 'text-amber-600 bg-amber-50',  label: 'BI-OJK Hackathon 2025', desc: 'Semifinalis · Kategori Fintech UMKM' },
+  { icon: Award,       iconCls: 'text-amber-600 bg-amber-50',  label: 'BI-OJK Hackathon 2025', desc: 'Penghargaan Kategori Mahasiswa · Innovation Frontier 1' },
   { icon: GraduationCap, iconCls: 'text-blue-600 bg-blue-50', label: 'Universitas Tanjungpura', desc: 'Pontianak, Kalimantan Barat' },
   { icon: Handshake,   iconCls: 'text-green-600 bg-green-50',  label: 'PIDI-DIGDAYA X 2026', desc: 'Peserta · BI · OJK · AFTECH' },
   { icon: TrendingUp,  iconCls: 'text-purple-600 bg-purple-50', label: '65,5 Juta Target', desc: 'UMKM Indonesia berpotensi' },
@@ -105,7 +105,7 @@ const About = () => {
       <section className="bg-navy-900 text-white py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-gold-500 bg-opacity-20 border border-gold-400 rounded-full px-4 py-1.5 text-gold-400 text-sm font-medium mb-6">
-            🏆 Semifinalis BI-OJK Hackathon 2025 · Peserta PIDI-DIGDAYA X 2026
+            🏆 Penghargaan Kategori Mahasiswa · Innovation Frontier 1 · BI-OJK Hackathon 2025
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Tentang Deschain</h1>
           <p className="text-gray-300 text-lg max-w-2xl mx-auto">
