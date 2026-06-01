@@ -1,3 +1,12 @@
+---
+title: Deschain Backend
+emoji: 🌿
+colorFrom: green
+colorTo: green
+sdk: docker
+pinned: false
+---
+
 # Deschain Backend
 
 Python FastAPI backend for the Deschain collective procurement platform.
