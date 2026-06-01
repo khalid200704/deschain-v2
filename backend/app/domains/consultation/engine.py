@@ -110,6 +110,31 @@ def _ollama_answer(query: str, chunks: list[dict]) -> str:
     return None
 
 
+def _groq_answer(query: str, chunks: list[dict]) -> str:
+    """Generate jawaban menggunakan Groq (gratis, cepat)"""
+    try:
+        from groq import Groq
+        from app.config import get_settings
+        settings = get_settings()
+        if not settings.GROQ_API_KEY:
+            return None
+        context = _build_context(chunks) if chunks else "Tidak ada informasi relevan ditemukan."
+        user_message = f"Pertanyaan: {query}\n\nKonteks:\n{context}"
+        client = Groq(api_key=settings.GROQ_API_KEY)
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": _SYSTEM_PROMPT},
+                {"role": "user", "content": user_message},
+            ],
+            max_tokens=1024,
+            temperature=0.7,
+        )
+        return response.choices[0].message.content
+    except Exception:
+        return None
+
+
 def _haiku_answer(query: str, chunks: list[dict]) -> str:
     """Generate jawaban menggunakan Claude Haiku dengan retrieved chunks sebagai konteks"""
     try:
@@ -204,10 +229,11 @@ def answer(query: str) -> dict:
 
     chunks = retrieve(query, top_k=3)
 
-    # Priority: model lokal (Ollama) → Claude Haiku → template fallback
+    # Priority: Groq → Claude Haiku → Ollama (lokal) → template fallback
     response_text = (
-        _ollama_answer(query, chunks)
+        _groq_answer(query, chunks)
         or _haiku_answer(query, chunks)
+        or _ollama_answer(query, chunks)
         or _fallback_answer(query, chunks)
     )
 

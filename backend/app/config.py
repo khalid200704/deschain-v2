@@ -74,6 +74,7 @@ class Settings(BaseSettings):
     
     # External APIs
     ANTHROPIC_API_KEY: Optional[str] = None
+    GROQ_API_KEY: Optional[str] = None
     BPS_API_KEY: Optional[str] = None
     KEMENKOP_API_KEY: Optional[str] = None
     
