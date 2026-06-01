@@ -6,7 +6,7 @@ from typing import Optional
 import jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthCredentials
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import structlog
 
 from app.config import get_settings
@@ -90,7 +90,7 @@ def verify_token(token: str) -> dict:
         )
 
 
-async def get_current_user(credentials: HTTPAuthCredentials = Depends(security)) -> dict:
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """Dependency to get current authenticated user"""
     token = credentials.credentials
     payload = verify_token(token)
@@ -103,8 +103,8 @@ async def get_current_user(credentials: HTTPAuthCredentials = Depends(security))
     
     return {
         "user_id": payload["sub"],
-        "email": payload["email"],
-        "user_type": payload["user_type"],
+        "email": payload.get("email", ""),
+        "user_type": payload.get("user_type", "umkm"),
     }
 
 

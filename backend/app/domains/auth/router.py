@@ -140,3 +140,52 @@ async def get_me(
     if not user:
         raise HTTPException(status_code=404, detail="Pengguna tidak ditemukan")
     return {"success": True, "data": _user_to_dict(user)}
+
+
+@router.put("/profile")
+async def update_profile(
+    body: dict,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Update profil pengguna (nama & telepon)"""
+    user = db.query(User).filter(User.id == current_user["user_id"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Pengguna tidak ditemukan")
+
+    if "first_name" in body and body["first_name"].strip():
+        user.first_name = body["first_name"].strip()
+    if "last_name" in body and body["last_name"].strip():
+        user.last_name = body["last_name"].strip()
+    if "phone" in body:
+        user.phone = body["phone"].strip() or None
+
+    db.commit()
+    db.refresh(user)
+    logger.info("profile_updated", user_id=str(user.id))
+    return {"success": True, "message": "Profil berhasil diperbarui", "data": _user_to_dict(user)}
+
+
+@router.put("/password")
+async def update_password(
+    body: dict,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Ganti password pengguna"""
+    user = db.query(User).filter(User.id == current_user["user_id"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Pengguna tidak ditemukan")
+
+    current_password = body.get("current_password", "")
+    new_password = body.get("new_password", "")
+
+    if not verify_password(current_password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Password lama salah")
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password baru minimal 8 karakter")
+
+    user.password_hash = hash_password(new_password)
+    db.commit()
+    logger.info("password_updated", user_id=str(user.id))
+    return {"success": True, "message": "Password berhasil diperbarui"}

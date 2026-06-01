@@ -25,8 +25,8 @@ apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
       localStorage.removeItem('accessToken')
+      localStorage.removeItem('authUser')
       window.location.href = '/auth/login'
     }
     return Promise.reject(error.response?.data || error)

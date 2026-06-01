@@ -56,7 +56,7 @@ app.add_middleware(
 # Trusted hosts
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.deschain.id", "*.vercel.app", "*.railway.app", "*.up.railway.app"],
+    allowed_hosts=["localhost", "127.0.0.1", "10.10.10.76", "192.168.110.250", "*.deschain.id", "*.vercel.app", "*.railway.app", "*.up.railway.app"],
 )
 
 
@@ -78,11 +78,19 @@ from app.domains.auth.router import router as auth_router
 from app.domains.procurement.router import router as procurement_router
 from app.domains.matching.router import router as matching_router
 from app.domains.analytics.router import router as analytics_router
+from app.domains.vendor.router import router as vendor_router
+from app.domains.transaction.router import router as transaction_router
+from app.domains.admin.router import router as admin_router
+from app.domains.consultation.router import router as consultation_router
 
 app.include_router(auth_router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Autentikasi"])
 app.include_router(procurement_router, prefix=f"{settings.API_V1_PREFIX}/procurement", tags=["Pengadaan"])
 app.include_router(matching_router, prefix=f"{settings.API_V1_PREFIX}/matching", tags=["AI Matching"])
 app.include_router(analytics_router, prefix=f"{settings.API_V1_PREFIX}/analytics", tags=["Analytics"])
+app.include_router(vendor_router, prefix=f"{settings.API_V1_PREFIX}/vendors", tags=["Vendor"])
+app.include_router(transaction_router, prefix=f"{settings.API_V1_PREFIX}/transactions", tags=["Transaksi"])
+app.include_router(admin_router, prefix=f"{settings.API_V1_PREFIX}/admin", tags=["Admin"])
+app.include_router(consultation_router, prefix=f"{settings.API_V1_PREFIX}/consultation", tags=["Konsultasi AI"])
 
 
 @app.get("/health")

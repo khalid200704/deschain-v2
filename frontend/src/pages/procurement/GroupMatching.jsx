@@ -4,6 +4,8 @@ import { DashboardLayout } from '../../components/layouts'
 import { useUIStore } from '../../stores'
 import { ProtectedRoute } from '../../components/common/ProtectedRoute'
 import apiClient from '../../api/client'
+import { matchingAPI } from '../../api/endpoints'
+import { Menu, Search, Users, CheckCircle } from 'lucide-react'
 
 const CATEGORIES = [
   'Sembako', 'Beras & Biji-bijian', 'Minyak & Lemak', 'Sayur & Buah',
@@ -24,17 +26,19 @@ const GroupMatching = () => {
   const { sidebarOpen, toggleSidebar } = useUIStore()
 
   const [form, setForm] = useState({
-    product_name: '',
-    product_category: 'Sembako',
-    quantity: '',
+    product_name: 'Beras Premium',
+    product_category: 'Beras & Biji-bijian',
+    quantity: '200',
     unit: 'kg',
-    budget: '',
+    budget: '3000000',
     delivery_city: 'Pontianak',
     delivery_urgency: 'normal',
   })
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState(null)
   const [error, setError] = useState('')
+  const [joining, setJoining] = useState(null)
+  const [joined, setJoined] = useState({})
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -56,7 +60,8 @@ const GroupMatching = () => {
         quantity: parseFloat(form.quantity),
         budget: parseFloat(form.budget),
       })
-      setResults(res.data)
+      if (res.success) setResults(res.data)
+      else setError(res.message || 'Gagal mencari grup.')
     } catch (err) {
       setError(err?.detail || 'Gagal mencari grup. Pastikan Anda sudah login.')
     } finally {
@@ -64,16 +69,43 @@ const GroupMatching = () => {
     }
   }
 
+  const handleJoin = async (group) => {
+    setJoining(group.id)
+    try {
+      const res = await matchingAPI.joinGroup({
+        product_name: form.product_name,
+        product_category: form.product_category,
+        quantity: parseFloat(form.quantity),
+        unit: form.unit,
+        budget: parseFloat(form.budget),
+        delivery_city: form.delivery_city,
+        delivery_urgency: form.delivery_urgency,
+        group_id: group.id,
+        group_name: group.group_name,
+      })
+      if (res.success) {
+        setJoined((prev) => ({ ...prev, [group.id]: res.data }))
+      } else {
+        setError(res.message || 'Gagal bergabung.')
+      }
+    } catch (err) {
+      setError(err?.detail || 'Gagal bergabung ke grup.')
+    } finally {
+      setJoining(null)
+    }
+  }
+
   return (
     <ProtectedRoute>
-      <DashboardLayout sidebarOpen={sidebarOpen}>
-        <button onClick={toggleSidebar} className="mb-4 p-2 bg-navy-900 text-white rounded-lg">☰ Menu</button>
-
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-navy-900">🤖 AI Group Matching</h1>
-          <p className="text-gray-600 mt-1">
-            Masukkan kebutuhan pengadaan Anda. AI kami akan menemukan UMKM lain dengan kebutuhan serupa.
-          </p>
+      <DashboardLayout sidebarOpen={sidebarOpen} onToggle={toggleSidebar}>
+        <div className="flex items-center gap-3 mb-6">
+          <button onClick={toggleSidebar} className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
+            <Menu size={18} className="text-navy-900" />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-navy-900">AI Group Matching</h1>
+            <p className="text-gray-400 text-sm">Temukan UMKM lain dengan kebutuhan pengadaan serupa</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
@@ -194,9 +226,14 @@ const GroupMatching = () => {
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      AI sedang mencocokkan...
+                      Mencari grup...
                     </span>
-                  ) : '🤖 Cari Grup Sekarang'}
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      <Search size={15} />
+                      Cari Grup Sekarang
+                    </span>
+                  )}
                 </button>
               </form>
             </div>
@@ -205,20 +242,22 @@ const GroupMatching = () => {
           {/* Hasil */}
           <div className="lg:col-span-3">
             {!results && !loading && (
-              <div className="bg-white rounded-2xl shadow-md p-12 text-center border border-gray-100">
-                <div className="text-6xl mb-4">🤖</div>
-                <h3 className="text-xl font-bold text-navy-900 mb-2">AI Siap Mencocokkan</h3>
-                <p className="text-gray-500 text-sm">
-                  Isi form di kiri, lalu klik "Cari Grup Sekarang" untuk melihat rekomendasi grup pengadaan terbaik.
+              <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-gray-100">
+                <div className="w-16 h-16 bg-navy-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Users size={28} className="text-navy-900" />
+                </div>
+                <h3 className="text-lg font-bold text-navy-900 mb-2">AI Siap Mencocokkan</h3>
+                <p className="text-gray-400 text-sm">
+                  Isi form di kiri, lalu klik "Cari Grup Sekarang" untuk melihat rekomendasi grup terbaik.
                 </p>
               </div>
             )}
 
             {loading && (
-              <div className="bg-white rounded-2xl shadow-md p-12 text-center border border-gray-100">
-                <div className="w-16 h-16 border-4 border-gray-200 border-t-gold-500 rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-navy-900 font-semibold">AI sedang menganalisis kebutuhan Anda...</p>
-                <p className="text-gray-500 text-sm mt-2">Mencari UMKM dengan kebutuhan serupa di {form.delivery_city}</p>
+              <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-gray-100">
+                <div className="w-12 h-12 border-4 border-gray-100 border-t-gold-500 rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-navy-900 font-medium text-sm">Menganalisis kebutuhan Anda...</p>
+                <p className="text-gray-400 text-xs mt-1">Mencari UMKM dengan kebutuhan serupa di {form.delivery_city}</p>
               </div>
             )}
 
@@ -283,12 +322,25 @@ const GroupMatching = () => {
                     </div>
 
                     <div className="flex gap-3">
-                      <button className="flex-1 py-2 bg-gold-500 text-white font-semibold rounded-xl hover:bg-gold-600 transition-colors text-sm">
-                        Gabung Grup
-                      </button>
-                      <button className="py-2 px-4 border border-gray-300 text-gray-600 rounded-xl hover:bg-gray-50 text-sm">
-                        Detail
-                      </button>
+                      {joined[group.id] ? (
+                        <div className="flex-1 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5">
+                          <CheckCircle size={14} />
+                          Berhasil Bergabung — Hemat {joined[group.id].estimated_savings_pct}%
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleJoin(group)}
+                          disabled={joining === group.id}
+                          className="flex-1 py-2 bg-gold-500 text-white font-semibold rounded-xl hover:bg-gold-600 transition-colors text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+                        >
+                          {joining === group.id ? (
+                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Users size={14} />
+                          )}
+                          {joining === group.id ? 'Memproses...' : 'Gabung Grup'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

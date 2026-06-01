@@ -1,17 +1,25 @@
 import { create } from 'zustand'
 
+const _savedUser = () => {
+  try { return JSON.parse(localStorage.getItem('authUser')) } catch { return null }
+}
+
 export const useAuthStore = create((set) => ({
-  user: null,
+  user: _savedUser(),
   token: localStorage.getItem('accessToken') || null,
   isAuthenticated: !!localStorage.getItem('accessToken'),
 
-  setUser: (user) => set({ user }),
+  setUser: (user) => {
+    localStorage.setItem('authUser', JSON.stringify(user))
+    set({ user })
+  },
   setToken: (token) => {
     localStorage.setItem('accessToken', token)
     set({ token, isAuthenticated: !!token })
   },
   logout: () => {
     localStorage.removeItem('accessToken')
+    localStorage.removeItem('authUser')
     set({ user: null, token: null, isAuthenticated: false })
   },
 }))

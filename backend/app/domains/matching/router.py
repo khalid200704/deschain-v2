@@ -3,18 +3,22 @@ AI Group Matching router — algoritma pencocokan permintaan pengadaan serupa
 """
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.database import get_db
 from app.security import get_current_user
-from app.models import ProcurementRequest, UMKM
+from app.models import ProcurementRequest, UMKM, ProcurementGroup, GroupMembership
+import uuid as _uuid
 
 import structlog
 
 logger = structlog.get_logger()
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 def _compute_similarity(req_a: ProcurementRequest, req_b: ProcurementRequest) -> float:
@@ -71,7 +75,9 @@ class MatchRequest(BaseModel):
 
 
 @router.post("/groups/match")
+@limiter.limit("20/minute")
 async def match_groups(
+    request: Request,
     body: MatchRequest,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
@@ -251,3 +257,146 @@ def _generate_demo_groups(body: MatchRequest) -> list:
             ],
         },
     ]
+
+
+class JoinGroupBody(BaseModel):
+    product_name: str
+    product_category: str
+    quantity: float
+    unit: str
+    budget: float
+    delivery_city: str
+    delivery_urgency: str = "normal"
+    # Group info (bisa dari matching result)
+    group_id: Optional[str] = None
+    group_name: Optional[str] = None
+
+
+def _get_or_create_umkm(db: Session, user_id: str) -> UMKM:
+    """Buat profil UMKM dasar jika belum ada"""
+    from app.models import User
+    umkm = db.query(UMKM).filter(UMKM.user_id == user_id).first()
+    if umkm:
+        return umkm
+    user = db.query(User).filter(User.id == user_id).first()
+    umkm = UMKM(
+        user_id=user_id,
+        business_name=f"Usaha {user.first_name}" if user else "UMKM",
+        industry_category="Perdagangan",
+        city="Pontianak",
+        province="Kalimantan Barat",
+        verification_status="pending",
+        credit_score=3.0,
+        total_transactions=0,
+        total_procurement_value=0,
+    )
+    db.add(umkm)
+    db.flush()
+    return umkm
+
+
+@router.post("/groups/join")
+async def join_group(
+    body: JoinGroupBody,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Bergabung ke grup pengadaan — buat permintaan + keanggotaan grup"""
+    umkm = _get_or_create_umkm(db, current_user["user_id"])
+
+    # Cari atau buat ProcurementGroup
+    group = None
+    if body.group_id:
+        try:
+            group = db.query(ProcurementGroup).filter(
+                ProcurementGroup.id == _uuid.UUID(body.group_id)
+            ).first()
+        except Exception:
+            pass
+
+    if not group:
+        # Cari grup terbuka yang cocok di DB
+        group = db.query(ProcurementGroup).filter(
+            ProcurementGroup.product_category == body.product_category,
+            ProcurementGroup.delivery_city == body.delivery_city,
+            ProcurementGroup.status == "forming",
+        ).first()
+
+    if not group:
+        # Buat grup baru
+        group = ProcurementGroup(
+            group_name=body.group_name or f"Grup {body.product_category} {body.delivery_city}",
+            product_category=body.product_category,
+            unit=body.unit,
+            total_quantity=body.quantity,
+            total_budget=body.budget,
+            delivery_city=body.delivery_city,
+            status="forming",
+            member_count=0,
+            total_savings=0,
+            created_by_umkm_id=umkm.id,
+        )
+        db.add(group)
+        db.flush()
+
+    # Cek apakah sudah bergabung
+    existing = db.query(GroupMembership).filter(
+        GroupMembership.group_id == group.id,
+        GroupMembership.umkm_id == umkm.id,
+    ).first()
+    if existing:
+        return {"success": False, "message": "Anda sudah bergabung di grup ini."}
+
+    # Buat ProcurementRequest untuk user ini
+    req = ProcurementRequest(
+        umkm_id=umkm.id,
+        product_name=body.product_name,
+        product_category=body.product_category,
+        quantity=body.quantity,
+        unit=body.unit,
+        budget=body.budget,
+        delivery_city=body.delivery_city,
+        delivery_urgency=body.delivery_urgency,
+        status="matched",
+    )
+    db.add(req)
+    db.flush()
+
+    # Buat keanggotaan grup
+    savings_pct = _estimate_savings(group.member_count + 1, group.total_quantity + body.quantity) * 100
+    membership = GroupMembership(
+        group_id=group.id,
+        umkm_id=umkm.id,
+        request_id=req.id,
+        quantity=body.quantity,
+        individual_budget=body.budget,
+        savings_percentage=round(savings_pct, 1),
+        status="confirmed",
+    )
+    db.add(membership)
+
+    # Update group stats
+    group.member_count = (group.member_count or 0) + 1
+    group.total_quantity = (group.total_quantity or 0) + body.quantity
+    group.total_budget = (group.total_budget or 0) + body.budget
+    group.total_savings = (group.total_savings or 0) + body.budget * savings_pct / 100
+
+    # Update UMKM stats
+    umkm.total_transactions = (umkm.total_transactions or 0) + 1
+    umkm.total_procurement_value = (umkm.total_procurement_value or 0) + body.budget
+
+    db.commit()
+
+    logger.info("group_joined", group_id=str(group.id), umkm_id=str(umkm.id))
+
+    return {
+        "success": True,
+        "message": f"Berhasil bergabung ke {group.group_name}",
+        "data": {
+            "group_id": str(group.id),
+            "group_name": group.group_name,
+            "member_count": group.member_count,
+            "estimated_savings_pct": round(savings_pct, 1),
+            "estimated_savings_amount": round(body.budget * savings_pct / 100),
+        },
+    }

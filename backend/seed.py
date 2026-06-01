@@ -57,6 +57,12 @@ def create_user(email, password, first_name, last_name, phone, user_type):
 def seed():
     clear_data()
 
+    # ── Admin ─────────────────────────────────────────────────
+    create_user(
+        "admin@deschain.id", "Admin1234!", "Abdullah", "Khalid",
+        "081234567890", "admin"
+    )
+
     # ── Users UMKM ───────────────────────────────────────────
     demo_user = create_user(
         "demo@deschain.id", "Demo1234!", "Budi", "Santoso",
@@ -221,24 +227,25 @@ def seed():
         db.add(m)
         return m
 
-    mk_member(grp1, demo_umkm, req1, 500, 7_500_000, 20.0, "completed", 38)
-    mk_member(grp1, umkm2,     req5, 300, 4_500_000, 20.0, "completed", 38)
-    mk_member(grp1, umkm3,     None, 300, 4_500_000, 20.0, "completed", 38)
-    mk_member(grp1, umkm9,     req10, 200, 3_000_000, 20.0, "completed", 38)
-    mk_member(grp1, umkm5,     None,  200, 3_000_000, 20.0, "completed", 38)
+    # Spread demo user memberships merata di 4 minggu terakhir → chart tidak ada gap
+    mk_member(grp1, demo_umkm, req1, 500, 7_500_000, 20.0, "completed", 26)  # Minggu 1 (21-28 hari lalu)
+    mk_member(grp1, umkm2,     req5, 300, 4_500_000, 20.0, "completed", 26)
+    mk_member(grp1, umkm3,     None, 300, 4_500_000, 20.0, "completed", 26)
+    mk_member(grp1, umkm9,     req10, 200, 3_000_000, 20.0, "completed", 26)
+    mk_member(grp1, umkm5,     None,  200, 3_000_000, 20.0, "completed", 26)
 
-    mk_member(grp2, demo_umkm, req2, 200, 6_400_000, 15.0, "completed", 23)
-    mk_member(grp2, umkm6,     None, 150, 4_800_000, 15.0, "completed", 23)
-    mk_member(grp2, umkm8,     None, 250, 8_000_000, 15.0, "completed", 23)
-    mk_member(grp2, umkm10,    None, 200, 6_400_000, 15.0, "completed", 23)
+    mk_member(grp2, demo_umkm, req2, 200, 6_400_000, 15.0, "completed", 18)  # Minggu 2 (14-21 hari lalu)
+    mk_member(grp2, umkm6,     None, 150, 4_800_000, 15.0, "completed", 18)
+    mk_member(grp2, umkm8,     None, 250, 8_000_000, 15.0, "completed", 18)
+    mk_member(grp2, umkm10,    None, 200, 6_400_000, 15.0, "completed", 18)
 
-    mk_member(grp3, demo_umkm, req3, 300, 3_600_000, 20.0, "completed", 13)
-    mk_member(grp3, umkm5,     req8, 400, 4_800_000, 20.0, "completed", 13)
-    mk_member(grp3, umkm2,     None, 500, 6_000_000, 20.0, "completed", 13)
+    mk_member(grp3, demo_umkm, req3, 300, 3_600_000, 20.0, "completed", 10)  # Minggu 3 (7-14 hari lalu)
+    mk_member(grp3, umkm5,     req8, 400, 4_800_000, 20.0, "completed", 10)
+    mk_member(grp3, umkm2,     None, 500, 6_000_000, 20.0, "completed", 10)
 
-    mk_member(grp4, demo_umkm, req4, 100, 1_800_000, 0,   "pending", 3)
-    mk_member(grp4, umkm3,     req6, 150, 2_700_000, 0,   "pending", 3)
-    mk_member(grp4, umkm9,     None, 200, 3_600_000, 0,   "pending", 3)
+    mk_member(grp4, demo_umkm, req4, 100, 1_800_000, 18.0, "completed", 4)   # Minggu 4 (0-7 hari lalu)
+    mk_member(grp4, umkm3,     req6, 150, 2_700_000, 15.0, "pending",   3)
+    mk_member(grp4, umkm9,     None, 200, 3_600_000, 15.0, "pending",   3)
 
     mk_member(grp5, umkm4,     req7, 200, 12_000_000, 15.0, "completed", 58)
     mk_member(grp5, umkm7,     None, 100,  6_000_000, 15.0, "completed", 58)
@@ -292,9 +299,10 @@ def seed():
         db.add(n)
 
     db.commit()
-    print("✅ Seed berhasil! Data demo telah dibuat.")
+    print("Seed berhasil! Data demo telah dibuat.")
     print()
     print("Demo Credentials:")
+    print("  Admin  : admin@deschain.id  / Admin1234!")
     print("  UMKM   : demo@deschain.id   / Demo1234!")
     print("  Vendor : vendor@deschain.id / Demo1234!")
     print()

@@ -98,7 +98,7 @@ const Pricing = () => {
             >
               {plan.highlight && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gold-500 text-white text-xs font-bold px-5 py-1.5 rounded-full">
-                  ✨ Paling Populer
+                  Paling Populer
                 </div>
               )}
 

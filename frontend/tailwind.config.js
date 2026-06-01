@@ -7,24 +7,27 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Primary Navy
+        // Primary Dark (tetap navy untuk teks & background gelap)
         navy: {
-          50: '#F8FAFC',
-          100: '#F0F4F8',
-          500: '#1E40AF',
-          900: '#0F172A',
+          50:  '#F4F7F4',
+          100: '#E4EDE3',
+          500: '#2D6B27',
+          900: '#0F1F0D',
         },
-        // Accent Gold
+        // Accent Green — primary brand color #49913E
         gold: {
-          400: '#FBBF24',
-          500: '#F59E0B',
-          600: '#D97706',
+          50:  '#F2F8F1',
+          100: '#DAF0D7',
+          400: '#6DB863',
+          500: '#49913E',
+          600: '#38732F',
+          700: '#2C5824',
         },
-        // Background Ice
+        // Background Light Green (ganti ice → green tint)
         ice: {
-          50: '#F0F9FF',
-          100: '#E0F2FE',
-          200: '#BAE6FD',
+          50:  '#F2F8F1',
+          100: '#DAF0D7',
+          200: '#B5DFB0',
         },
       },
     },

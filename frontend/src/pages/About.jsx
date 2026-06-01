@@ -1,5 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Award, GraduationCap, Handshake, TrendingUp } from 'lucide-react'
 
 const TEAM = [
   {
@@ -78,10 +79,10 @@ const ROADMAP = [
 ]
 
 const ACHIEVEMENTS = [
-  { icon: '🏆', label: 'Hackathon BI-OJK 2025', desc: 'Pemenang kategori Fintech UMKM' },
-  { icon: '🎓', label: 'Universitas Tanjungpura', desc: 'Pontianak, Kalimantan Barat' },
-  { icon: '🤝', label: 'PIDI-DIGDAYA X 2026', desc: 'Finalis · BI · OJK · AFTECH' },
-  { icon: '📊', label: '65,5 Juta Target', desc: 'UMKM Indonesia berpotensi' },
+  { icon: Award,       iconCls: 'text-amber-600 bg-amber-50',  label: 'Hackathon BI-OJK 2025', desc: 'Pemenang kategori Fintech UMKM' },
+  { icon: GraduationCap, iconCls: 'text-blue-600 bg-blue-50', label: 'Universitas Tanjungpura', desc: 'Pontianak, Kalimantan Barat' },
+  { icon: Handshake,   iconCls: 'text-green-600 bg-green-50',  label: 'PIDI-DIGDAYA X 2026', desc: 'Finalis · BI · OJK · AFTECH' },
+  { icon: TrendingUp,  iconCls: 'text-purple-600 bg-purple-50', label: '65,5 Juta Target', desc: 'UMKM Indonesia berpotensi' },
 ]
 
 const About = () => {
@@ -131,13 +132,18 @@ const About = () => {
 
         {/* Achievements */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
-          {ACHIEVEMENTS.map((a) => (
-            <div key={a.label} className="bg-white rounded-2xl p-6 text-center border border-gray-100 shadow-sm">
-              <div className="text-3xl mb-2">{a.icon}</div>
-              <div className="font-bold text-navy-900 text-sm mb-1">{a.label}</div>
-              <div className="text-xs text-gray-500">{a.desc}</div>
-            </div>
-          ))}
+          {ACHIEVEMENTS.map((a) => {
+            const Icon = a.icon
+            return (
+              <div key={a.label} className="bg-white rounded-2xl p-6 text-center border border-gray-100 shadow-sm">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3 ${a.iconCls}`}>
+                  <Icon size={20} />
+                </div>
+                <div className="font-bold text-navy-900 text-sm mb-1">{a.label}</div>
+                <div className="text-xs text-gray-500">{a.desc}</div>
+              </div>
+            )
+          })}
         </div>
 
         {/* Problem vs Solution */}

@@ -3,17 +3,43 @@ SQLAlchemy ORM Models for Deschain
 """
 from datetime import datetime
 import uuid
-from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, Text, ForeignKey, Enum, ARRAY
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, Text, ForeignKey, JSON
+from sqlalchemy.types import TypeDecorator, CHAR
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship
-from app.database import Base
+from app.database import Base, _is_sqlite
+
+
+class UUIDType(TypeDecorator):
+    """UUID type compatible with both PostgreSQL and SQLite"""
+    impl = CHAR(36)
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(PG_UUID(as_uuid=True))
+        return dialect.type_descriptor(CHAR(36))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        return str(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        import uuid as _uuid
+        return _uuid.UUID(str(value)) if not isinstance(value, _uuid.UUID) else value
+
+
+UUID = UUIDType
 
 
 class User(Base):
     """User model"""
     __tablename__ = "users"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     phone = Column(String(20), unique=True)
     password_hash = Column(String(255), nullable=False)
@@ -35,8 +61,8 @@ class UMKM(Base):
     """UMKM (Small Business) model"""
     __tablename__ = "umkms"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     business_name = Column(String(255), nullable=False)
     business_registration_number = Column(String(50))
     industry_category = Column(String(100))
@@ -71,8 +97,8 @@ class Vendor(Base):
     """Vendor (Supplier) model"""
     __tablename__ = "vendors"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     vendor_name = Column(String(255), nullable=False)
     vendor_registration_number = Column(String(50))
     business_category = Column(String(100))
@@ -85,7 +111,7 @@ class Vendor(Base):
     address = Column(Text)
     latitude = Column(Float)
     longitude = Column(Float)
-    product_categories = Column(ARRAY(String))
+    product_categories = Column(JSON)
     min_order_quantity = Column(Integer)
     average_lead_time_days = Column(Integer)
     verification_status = Column(String(50), default="pending", index=True)
@@ -104,8 +130,8 @@ class ProcurementRequest(Base):
     """Procurement request model"""
     __tablename__ = "procurement_requests"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    umkm_id = Column(UUID(as_uuid=True), ForeignKey("umkms.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    umkm_id = Column(UUID(), ForeignKey("umkms.id", ondelete="CASCADE"), nullable=False, index=True)
     product_name = Column(String(255), nullable=False)
     product_category = Column(String(100), index=True)
     product_description = Column(Text)
@@ -131,7 +157,7 @@ class ProcurementGroup(Base):
     """Procurement group model"""
     __tablename__ = "procurement_groups"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     group_name = Column(String(255), nullable=False)
     description = Column(Text)
     product_category = Column(String(100))
@@ -142,8 +168,8 @@ class ProcurementGroup(Base):
     target_delivery_date = Column(DateTime)
     delivery_city = Column(String(100))
     status = Column(String(50), default="forming", index=True)
-    created_by_umkm_id = Column(UUID(as_uuid=True), ForeignKey("umkms.id"), nullable=False)
-    selected_vendor_id = Column(UUID(as_uuid=True), ForeignKey("vendors.id"))
+    created_by_umkm_id = Column(UUID(), ForeignKey("umkms.id"), nullable=False)
+    selected_vendor_id = Column(UUID(), ForeignKey("vendors.id"))
     total_savings = Column(Float, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -153,10 +179,10 @@ class GroupMembership(Base):
     """Group membership model"""
     __tablename__ = "group_memberships"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    group_id = Column(UUID(as_uuid=True), ForeignKey("procurement_groups.id", ondelete="CASCADE"), nullable=False)
-    umkm_id = Column(UUID(as_uuid=True), ForeignKey("umkms.id", ondelete="CASCADE"), nullable=False)
-    request_id = Column(UUID(as_uuid=True), ForeignKey("procurement_requests.id"))
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    group_id = Column(UUID(), ForeignKey("procurement_groups.id", ondelete="CASCADE"), nullable=False)
+    umkm_id = Column(UUID(), ForeignKey("umkms.id", ondelete="CASCADE"), nullable=False)
+    request_id = Column(UUID(), ForeignKey("procurement_requests.id"))
     quantity = Column(Float)
     unit_price = Column(Float)
     total_price = Column(Float)
@@ -173,9 +199,9 @@ class Transaction(Base):
     """Transaction model"""
     __tablename__ = "transactions"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    group_id = Column(UUID(as_uuid=True), ForeignKey("procurement_groups.id"), nullable=False)
-    vendor_id = Column(UUID(as_uuid=True), ForeignKey("vendors.id"), nullable=False)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    group_id = Column(UUID(), ForeignKey("procurement_groups.id"), nullable=False)
+    vendor_id = Column(UUID(), ForeignKey("vendors.id"), nullable=False)
     order_number = Column(String(50), unique=True)
     total_amount = Column(Float, nullable=False)
     tax_amount = Column(Float, default=0)
@@ -197,8 +223,8 @@ class Payment(Base):
     """Payment model"""
     __tablename__ = "payments"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    transaction_id = Column(UUID(as_uuid=True), ForeignKey("transactions.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    transaction_id = Column(UUID(), ForeignKey("transactions.id", ondelete="CASCADE"), nullable=False, index=True)
     payment_method = Column(String(50))
     payment_reference = Column(String(100))
     amount = Column(Float, nullable=False)
@@ -214,12 +240,12 @@ class Notification(Base):
     """Notification model"""
     __tablename__ = "notifications"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String(255), nullable=False)
     message = Column(Text)
     notification_type = Column(String(50))
-    related_entity_id = Column(UUID(as_uuid=True))
+    related_entity_id = Column(UUID())
     related_entity_type = Column(String(100))
     is_read = Column(Boolean, default=False, index=True)
     channel = Column(String(50), default="in_app")

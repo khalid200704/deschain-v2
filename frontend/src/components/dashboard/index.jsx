@@ -2,6 +2,7 @@ import React from 'react'
 import { analyticsAPI } from '../../api/endpoints'
 import { Spinner } from '../common'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { Package, Wallet, CheckCircle, Star, TrendingUp, Clock } from 'lucide-react'
 
 const fmt = (n) => n?.toLocaleString('id-ID') ?? '0'
 
@@ -13,16 +14,16 @@ export const DashboardMetrics = () => {
   React.useEffect(() => {
     analyticsAPI.getDashboard()
       .then((res) => { if (res.success) setMetrics(res.data) })
-      .catch(() => setError('Gagal memuat metrik. Periksa koneksi Anda.'))
+      .catch(() => setError('Gagal memuat metrik.'))
       .finally(() => setLoading(false))
   }, [])
 
   if (loading) return (
-    <div className="flex justify-center items-center py-12"><Spinner size="lg" /></div>
+    <div className="flex justify-center items-center py-16"><Spinner size="lg" /></div>
   )
   if (error) return (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600 text-sm flex items-center gap-3">
-      <span>⚠️ {error}</span>
+    <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600 text-sm flex items-center justify-between">
+      <span>{error}</span>
       <button onClick={() => window.location.reload()} className="text-red-700 underline text-xs">Muat ulang</button>
     </div>
   )
@@ -32,62 +33,73 @@ export const DashboardMetrics = () => {
       label: 'Total Pengadaan',
       value: `Rp ${fmt(Math.round((metrics?.total_procurement_value ?? 0) / 1_000_000))}M`,
       sub: 'Nilai kumulatif',
-      icon: '📦',
+      icon: Package,
       color: 'text-navy-900',
+      iconBg: 'bg-blue-50 text-blue-600',
     },
     {
       label: 'Total Penghematan',
       value: `Rp ${fmt(Math.round((metrics?.total_savings ?? 0) / 1_000_000))}M`,
       sub: `${metrics?.average_savings_percentage ?? 0}% rata-rata`,
-      icon: '💰',
+      icon: Wallet,
       color: 'text-gold-500',
-      badge: true,
+      iconBg: 'bg-amber-50 text-amber-600',
     },
     {
       label: 'Transaksi Selesai',
       value: metrics?.total_transactions ?? 0,
       sub: 'Semua periode',
-      icon: '✅',
+      icon: CheckCircle,
       color: 'text-green-600',
+      iconBg: 'bg-green-50 text-green-600',
     },
     {
       label: 'Skor Kredit',
       value: `${metrics?.credit_score ?? 0}/5`,
       sub: metrics?.credit_score >= 4 ? 'Sangat Baik' : metrics?.credit_score >= 3 ? 'Baik' : 'Sedang',
-      icon: '⭐',
+      icon: Star,
       color: 'text-navy-900',
-      badge: true,
+      iconBg: 'bg-purple-50 text-purple-600',
     },
   ]
 
   return (
     <div>
       {metrics?.is_demo && (
-        <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-700 text-xs px-4 py-2 rounded-lg flex items-center gap-2">
-          <span>📊</span>
-          <span>Data demo — mulai pengadaan pertama Anda untuk melihat metrik nyata.</span>
+        <div className="mb-5 bg-amber-50 border border-amber-200 text-amber-700 text-xs px-4 py-2.5 rounded-xl flex items-center gap-2">
+          <TrendingUp size={14} />
+          Data demo — buat pengadaan pertama untuk melihat metrik nyata Anda.
         </div>
       )}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {kpis.map((k) => (
-          <div key={k.label} className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
-            <div className="text-2xl mb-2">{k.icon}</div>
-            <div className="text-xs font-medium text-gray-500 mb-1">{k.label}</div>
-            <div className={`text-2xl font-bold ${k.color}`}>{k.value}</div>
-            <div className="text-xs text-gray-400 mt-1">{k.sub}</div>
-          </div>
-        ))}
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {kpis.map((k) => {
+          const Icon = k.icon
+          return (
+            <div key={k.label} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${k.iconBg}`}>
+                <Icon size={18} />
+              </div>
+              <div className="text-xs text-gray-500 mb-1">{k.label}</div>
+              <div className={`text-xl font-bold ${k.color}`}>{k.value}</div>
+              <div className="text-xs text-gray-400 mt-1">{k.sub}</div>
+            </div>
+          )
+        })}
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 mb-8">
-        <h3 className="text-base font-bold text-navy-900 mb-4">Tren Penghematan</h3>
-        <ResponsiveContainer width="100%" height={200}>
+      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-6">
+        <h3 className="text-sm font-semibold text-navy-900 mb-4">Tren Penghematan</h3>
+        <ResponsiveContainer width="100%" height={180}>
           <LineChart data={metrics?.weekly_savings ?? []}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="week" tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={(v) => `Rp ${(v / 1_000_000).toFixed(1)}M`} tick={{ fontSize: 11 }} width={70} />
-            <Tooltip formatter={(v) => `Rp ${fmt(v)}`} />
-            <Line type="monotone" dataKey="amount" stroke="#F59E0B" strokeWidth={2.5} dot={{ r: 4 }} name="Penghematan" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+            <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+            <YAxis tickFormatter={(v) => `Rp ${(v / 1_000_000).toFixed(1)}M`} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={72} />
+            <Tooltip
+              formatter={(v) => [`Rp ${fmt(v)}`, 'Penghematan']}
+              contentStyle={{ borderRadius: '10px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }}
+            />
+            <Line type="monotone" dataKey="amount" stroke="#F59E0B" strokeWidth={2.5} dot={{ r: 3, fill: '#F59E0B' }} activeDot={{ r: 5 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -95,11 +107,10 @@ export const DashboardMetrics = () => {
   )
 }
 
-
-const EVENT_STYLES = {
-  completed: { bg: 'bg-green-50', border: 'border-green-200', dot: 'bg-green-500', label: 'Selesai' },
-  joined:    { bg: 'bg-blue-50',  border: 'border-blue-200',  dot: 'bg-blue-500',  label: 'Bergabung' },
-  requested: { bg: 'bg-gray-50',  border: 'border-gray-200',  dot: 'bg-gray-400',  label: 'Diminta' },
+const TRAIL_STYLES = {
+  completed: { dot: 'bg-green-500', bg: 'bg-green-50', border: 'border-green-100' },
+  joined:    { dot: 'bg-blue-500',  bg: 'bg-blue-50',  border: 'border-blue-100'  },
+  requested: { dot: 'bg-gray-300',  bg: 'bg-gray-50',  border: 'border-gray-100'  },
 }
 
 export const CreditTrail = () => {
@@ -114,49 +125,48 @@ export const CreditTrail = () => {
   }, [])
 
   const fmtDate = (iso) => {
+    if (!iso) return '—'
     const d = new Date(iso)
-    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    return isNaN(d) ? '—' : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
-  if (loading) return <div className="py-8 text-center"><Spinner /></div>
+  if (loading) return (
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex justify-center py-12">
+      <Spinner />
+    </div>
+  )
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-base font-bold text-navy-900">Credit Trail</h3>
-        <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">Riwayat Pengadaan</span>
+        <h3 className="text-sm font-semibold text-navy-900">Credit Trail</h3>
+        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <Clock size={12} />
+          Riwayat Pengadaan
+        </div>
       </div>
 
       {trail.length === 0 ? (
-        <div className="text-center py-8 text-gray-400">
-          <div className="text-4xl mb-3">📋</div>
+        <div className="text-center py-10 text-gray-400">
           <p className="text-sm">Belum ada riwayat pengadaan.</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {trail.map((item) => {
-            const style = EVENT_STYLES[item.type] ?? EVENT_STYLES.requested
+            const s = TRAIL_STYLES[item.type] ?? TRAIL_STYLES.requested
             return (
-              <div key={item.id} className={`flex gap-3 p-4 rounded-xl border ${style.bg} ${style.border}`}>
-                <div className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${style.dot}`} />
+              <div key={item.id} className={`flex gap-3 p-3.5 rounded-xl border ${s.bg} ${s.border}`}>
+                <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${s.dot}`} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-navy-900">{item.event}</span>
+                    <span className="text-sm font-medium text-navy-900">{item.event}</span>
                     <span className="text-xs text-gray-400 flex-shrink-0">{fmtDate(item.date)}</span>
                   </div>
-                  <p className="text-xs text-gray-600 mt-0.5 truncate">{item.detail}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 truncate">{item.detail}</p>
                   {item.savings != null && (
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className="text-xs font-semibold text-green-700">
-                        Hemat Rp {fmt(Math.round(item.savings))}
-                      </span>
-                      <span className="text-xs text-green-600">({item.savings_pct}%)</span>
-                    </div>
-                  )}
-                  {item.amount != null && (
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      Nilai: Rp {fmt(item.amount)}
-                    </div>
+                    <p className="text-xs font-medium text-green-700 mt-1">
+                      Hemat Rp {fmt(Math.round(item.savings))} ({item.savings_pct}%)
+                    </p>
                   )}
                 </div>
               </div>

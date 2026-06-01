@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     ENVIRONMENT: str = "development"
     
-    # Database
-    DATABASE_URL: str = "postgresql://user:password@localhost:5432/deschain"
+    # Database (default SQLite untuk lokal; ganti ke PostgreSQL di production)
+    DATABASE_URL: str = "sqlite:///./deschain.db"
     DATABASE_POOL_SIZE: int = 5
     DATABASE_MAX_OVERFLOW: int = 10
     
@@ -32,7 +32,12 @@ class Settings(BaseSettings):
     JWT_EXPIRATION_HOURS: int = 24
     
     # CORS
-    CORS_ORIGINS: list = ["http://localhost:5173", "http://localhost:3000"]
+    CORS_ORIGINS: list = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://10.10.10.76:5173",
+        "http://192.168.110.250:5173",
+    ]
     CORS_CREDENTIALS: bool = True
     CORS_METHODS: list = ["*"]
     CORS_HEADERS: list = ["*"]
@@ -68,6 +73,7 @@ class Settings(BaseSettings):
     WHATSAPP_PHONE_NUMBER_ID: Optional[str] = None
     
     # External APIs
+    ANTHROPIC_API_KEY: Optional[str] = None
     BPS_API_KEY: Optional[str] = None
     KEMENKOP_API_KEY: Optional[str] = None
     

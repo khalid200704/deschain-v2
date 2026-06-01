@@ -177,7 +177,7 @@ async def get_credit_trail(
     for req in requests:
         trail.append({
             "id": str(req.id),
-            "date": req.created_at.isoformat(),
+            "date": req.created_at.isoformat() if req.created_at else None,
             "event": "Permintaan Dibuat" if req.status == "draft" else "Transaksi Selesai",
             "detail": f"{req.product_name} {req.quantity} {req.unit or ''} — {req.delivery_city or ''}",
             "amount": req.budget,
@@ -190,12 +190,19 @@ async def get_credit_trail(
         GroupMembership.umkm_id == umkm.id
     ).order_by(GroupMembership.joined_at.desc()).limit(20).all()
 
+    # Batch-load groups to avoid N+1 query
+    group_ids = [m.group_id for m in memberships if m.group_id]
+    groups_by_id = {}
+    if group_ids:
+        groups = db.query(ProcurementGroup).filter(ProcurementGroup.id.in_(group_ids)).all()
+        groups_by_id = {g.id: g for g in groups}
+
     for m in memberships:
-        group = db.query(ProcurementGroup).filter(ProcurementGroup.id == m.group_id).first()
+        group = groups_by_id.get(m.group_id)
         savings_amt = (m.individual_budget or 0) * (m.savings_percentage or 0) / 100
         trail.append({
             "id": str(m.id),
-            "date": m.joined_at.isoformat(),
+            "date": m.joined_at.isoformat() if m.joined_at else None,
             "event": "Bergabung Grup",
             "detail": group.group_name if group else "Grup Pengadaan",
             "amount": m.individual_budget,
@@ -204,7 +211,7 @@ async def get_credit_trail(
             "type": "joined",
         })
 
-    trail.sort(key=lambda x: x["date"], reverse=True)
+    trail.sort(key=lambda x: (x["date"] or ""), reverse=True)
     if not trail:
         return {"success": True, "data": _demo_credit_trail()}
 
