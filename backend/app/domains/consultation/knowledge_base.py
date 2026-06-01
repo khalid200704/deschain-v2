@@ -8,10 +8,15 @@ from pathlib import Path
 def _find_kb_file() -> Path:
     """Cari file knowledge base di beberapa lokasi yang mungkin"""
     candidates = [
-        Path(__file__).parent.parent.parent.parent.parent / "knowledge base Deschain.md",
+        # Di dalam backend/ (untuk HF Space — paling prioritas)
+        Path(__file__).parent.parent.parent.parent / "knowledge base Deschain.md",
+        # Dari working directory (cwd = /app di HF Space)
         Path(os.getcwd()) / "knowledge base Deschain.md",
+        # Satu level di atas backend/ (untuk dev lokal)
+        Path(__file__).parent.parent.parent.parent.parent / "knowledge base Deschain.md",
         Path(os.getcwd()) / ".." / "knowledge base Deschain.md",
-        Path(__file__).parent.parent.parent.parent.parent / "kb-1-pengadaan.md",
+        # Fallback: kb-1 saja
+        Path(__file__).parent.parent.parent.parent / "kb-1-pengadaan.md",
     ]
     for p in candidates:
         if p.exists():
