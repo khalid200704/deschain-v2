@@ -1,5 +1,12 @@
 # Deschain — Platform Pengadaan Kolektif AI untuk UMKM Indonesia
 
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green)
+![React](https://img.shields.io/badge/React-18-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Hackathon](https://img.shields.io/badge/PIDI--DIGDAYA_X-2026-gold)
+
 **Finalis PIDI-DIGDAYA X Hackathon 2026 · BI · OJK · AFTECH**
 
 > Hemat 15–25% biaya pengadaan UMKM melalui group buying bertenaga AI.
@@ -368,9 +375,10 @@ Built with ❤️ for Indonesian UMKM
 | Nama | Peran | Kontak |
 |------|-------|--------|
 | **Abdullah Khalid Fadillah** | Fullstack Developer | h1051221107@student.untan.ac.id |
-| **Duta Satria Nugroho** | Backend & AI Engineer | — |
+| **Duta Satria Nugroho** | Backend & AI Engineer | h1051221074@student.untan.ac.id |
 
-**Institusi**: Universitas Tanjungpura, Pontianak  
+**Institusi**: Universitas Tanjungpura (UNTAN), Pontianak, Kalimantan Barat
+**Program Studi**: Informatika, Fakultas MIPA  
 **Hackathon**: PIDI-DIGDAYA X 2026 — BI, OJK, AFTECH, ASPI, APUVINDO, LPPI  
 **Deadline**: 4 Juni 2026
 

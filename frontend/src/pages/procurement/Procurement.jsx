@@ -68,7 +68,26 @@ const Procurement = () => {
         </div>
 
         {loading ? (
-          <div className="text-center py-16 text-gray-400 text-sm">Memuat...</div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="px-6 py-4 border-b border-gray-50 last:border-0">
+                <div className="flex items-start justify-between gap-4 animate-pulse">
+                  <div className="flex-1">
+                    <div className="flex gap-2 mb-2">
+                      <div className="h-5 w-16 bg-gray-100 rounded-full" />
+                      <div className="h-5 w-24 bg-gray-100 rounded-full" />
+                    </div>
+                    <div className="h-4 w-48 bg-gray-100 rounded mb-1.5" />
+                    <div className="h-3 w-32 bg-gray-100 rounded" />
+                  </div>
+                  <div className="text-right">
+                    <div className="h-4 w-24 bg-gray-100 rounded mb-1.5" />
+                    <div className="h-3 w-16 bg-gray-100 rounded" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
             <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
