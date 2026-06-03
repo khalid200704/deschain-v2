@@ -82,6 +82,7 @@ from app.domains.vendor.router import router as vendor_router
 from app.domains.transaction.router import router as transaction_router
 from app.domains.admin.router import router as admin_router
 from app.domains.consultation.router import router as consultation_router
+from app.domains.notification.router import router as notification_router
 
 app.include_router(auth_router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Autentikasi"])
 app.include_router(procurement_router, prefix=f"{settings.API_V1_PREFIX}/procurement", tags=["Pengadaan"])
@@ -91,6 +92,7 @@ app.include_router(vendor_router, prefix=f"{settings.API_V1_PREFIX}/vendors", ta
 app.include_router(transaction_router, prefix=f"{settings.API_V1_PREFIX}/transactions", tags=["Transaksi"])
 app.include_router(admin_router, prefix=f"{settings.API_V1_PREFIX}/admin", tags=["Admin"])
 app.include_router(consultation_router, prefix=f"{settings.API_V1_PREFIX}/consultation", tags=["Konsultasi AI"])
+app.include_router(notification_router, prefix=f"{settings.API_V1_PREFIX}/notification", tags=["Notifikasi"])
 
 
 @app.get("/ping")

@@ -2,7 +2,7 @@ import React from 'react'
 import { DashboardLayout } from '../components/layouts'
 import { useUIStore } from '../stores'
 import { ProtectedRoute } from '../components/common/ProtectedRoute'
-import { Menu, Send, Bot, User, Loader2 } from 'lucide-react'
+import { Menu, Send, Bot, User, Loader2, Trash2 } from 'lucide-react'
 import { consultationAPI } from '../api/endpoints'
 
 const SUGGESTIONS = [
@@ -155,6 +155,12 @@ const Consultation = () => {
 
   const lastBotIdx = messages.reduce((acc, m, i) => m.role === 'bot' ? i : acc, -1)
 
+  const clearChat = () => {
+    setMessages([])
+    setInput('')
+    inputRef.current?.focus()
+  }
+
   return (
     <ProtectedRoute>
       <DashboardLayout sidebarOpen={sidebarOpen} onToggle={toggleSidebar}>
@@ -168,9 +174,20 @@ const Consultation = () => {
               <h1 className="text-xl font-bold text-navy-900">Konsultasi AI</h1>
               <p className="text-gray-400 text-sm">Tanya seputar UMKM, pengadaan, KUR, dan regulasi</p>
             </div>
-            <div className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded-full">
+            <div className="ml-auto flex items-center gap-2">
+              {messages.length > 0 && (
+                <button
+                  onClick={clearChat}
+                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Hapus percakapan"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded-full">
               <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
               <span className="text-xs text-green-700 font-medium">Aktif</span>
+            </div>
             </div>
           </div>
 

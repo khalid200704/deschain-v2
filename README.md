@@ -114,7 +114,7 @@ npm run dev
 - ✅ Vendor catalog and search
 - ✅ Procurement group formation
 - ✅ Supplier quote system
-- ✅ Payment processing (Midtrans)
+- ✅ Payment processing (Midtrans — planned Phase 2)
 - ✅ Transaction tracking
 - ✅ Credit trail analytics
 - ✅ Dashboard with metrics
