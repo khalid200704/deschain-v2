@@ -19,11 +19,8 @@ Model konsultasi berbasis **Mistral-7B-Instruct-v0.3** yang di-fine-tune khusus 
 
 ## Arsitektur RAG Consultation Engine
 
-<<<<<<< HEAD
 Sistem konsultasi Deschain menggunakan 4-layer fallback:
 
-=======
->>>>>>> 2d126ce (feat: notification domain, clear chat, update AI docs dengan model joezy99/deschain-umkm-7b)
 ```
 User Query
     ↓
@@ -48,13 +45,9 @@ ADAPTER    = "joezy99/deschain-umkm-7b"
 
 tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
 base = AutoModelForCausalLM.from_pretrained(
-<<<<<<< HEAD
     BASE_MODEL,
     torch_dtype=torch.float16,
     device_map="auto"
-=======
-    BASE_MODEL, torch_dtype=torch.float16, device_map="auto"
->>>>>>> 2d126ce (feat: notification domain, clear chat, update AI docs dengan model joezy99/deschain-umkm-7b)
 )
 model = PeftModel.from_pretrained(base, ADAPTER)
 
@@ -74,14 +67,10 @@ print(tokenizer.decode(outputs[0][inputs["input_ids"].shape[1]:], skip_special_t
 # Install Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
 
-<<<<<<< HEAD
 # Download base model
 ollama pull mistral:7b-instruct
 
 # Atau pakai Modelfile untuk Qwen (lebih ringan)
-=======
-# Build dari Modelfile (Qwen 1.5B, lebih ringan)
->>>>>>> 2d126ce (feat: notification domain, clear chat, update AI docs dengan model joezy99/deschain-umkm-7b)
 ollama pull qwen2.5:1.5b-instruct-q4_K_M
 ollama create deschain-umkm -f Modelfile
 
@@ -89,7 +78,6 @@ ollama create deschain-umkm -f Modelfile
 ollama run deschain-umkm "Bagaimana cara dapat KUR untuk UMKM?"
 ```
 
-<<<<<<< HEAD
 ## Training Ulang (Google Colab)
 
 Buka `deschain_finetune.ipynb` di Google Colab (Runtime → T4 GPU):
@@ -107,17 +95,10 @@ Buka `deschain_finetune.ipynb` di Google Colab (Runtime → T4 GPU):
 ## Tentang Deschain
 
 Platform pengadaan kolektif AI untuk UMKM Indonesia.
-- Demo: https://deschain-v2.vercel.app
-- GitHub: https://github.com/khalid200704/deschain-v2
-- HF Model: https://huggingface.co/joezy99/deschain-umkm-7b
-
-=======
-## Tentang Deschain
 
 - Demo: https://deschain-v2.vercel.app
 - GitHub: https://github.com/khalid200704/deschain-v2
 - HF Model: https://huggingface.co/joezy99/deschain-umkm-7b
 
->>>>>>> 2d126ce (feat: notification domain, clear chat, update AI docs dengan model joezy99/deschain-umkm-7b)
 *Tim Deschain — Universitas Tanjungpura, Pontianak*
 *PIDI-DIGDAYA X Hackathon 2026 — BI · OJK · AFTECH*
