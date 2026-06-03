@@ -100,7 +100,7 @@ def _build_context(chunks: list[dict]) -> str:
 
 def _ollama_answer(query: str, chunks: list[dict]) -> str:
     """Generate jawaban menggunakan model fine-tuned via Ollama (gratis, lokal)
-    
+
     Model fine-tuned tersedia di: https://huggingface.co/joezy99/deschain-umkm-7b
     Base: Mistral-7B-Instruct-v0.3, metode QLoRA (LoRA r=16)
     Untuk deploy via Ollama: lihat finetune/README.md

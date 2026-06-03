@@ -185,10 +185,11 @@ const Consultation = () => {
                 </button>
               )}
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded-full">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-xs text-green-700 font-medium">Aktif</span>
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-xs text-green-700 font-medium">Aktif</span>
+              </div>
             </div>
-            </div>
+          </div>
           </div>
 
           {/* Chat area */}
