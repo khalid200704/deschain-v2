@@ -214,16 +214,25 @@ Example:
 
 Details: [AI_MATCHING.md](docs/AI_MATCHING.md)
 
-## 🧠 AI Consultation (RAG)
+## 🧠 AI Consultation (RAG + Fine-tuned Model)
 
-Fitur konsultasi menggunakan Retrieval-Augmented Generation (RAG):
+Fitur konsultasi menggunakan Retrieval-Augmented Generation (RAG) dengan fallback berlapis:
 
 1. **Retrieval**: TF-IDF + cosine similarity mengambil top-3 chunk relevan
    dari knowledge base 7 topik (pengadaan, KUR, OJK/BI, pemasaran, keuangan)
-2. **Generation**: Claude Haiku / Groq llama-3.1-8b sebagai LLM
-3. **Fine-tuned fallback**: Model Qwen2.5-1.5B lokal via Ollama (offline-capable)
-4. **Knowledge base**: 100+ data points regulasi OJK/BI terkini (2024–2026),
-   termasuk POJK No. 29/2024 (ICS) dan POJK No. 11/2024 (SLIK fintech)
+2. **Generation Layer 1**: Groq llama-3.1-8b-instant (gratis, latensi rendah)
+3. **Generation Layer 2**: Claude Haiku (fallback jika Groq tidak tersedia)
+4. **Generation Layer 3**: Fine-tuned Mistral-7B via Ollama (offline-capable)
+5. **Generation Layer 4**: Template-based (fallback tanpa API key)
+
+**Fine-tuned Model**: [`joezy99/deschain-umkm-7b`](https://huggingface.co/joezy99/deschain-umkm-7b)
+- Base: Mistral-7B-Instruct-v0.3
+- Metode: QLoRA (4-bit, LoRA r=16)
+- Dilatih khusus untuk konteks regulasi BI/OJK, KUR 2026, supply chain UMKM Indonesia
+- Training: NVIDIA T4 GPU via Google Colab
+
+**Knowledge base**: 100+ data points regulasi OJK/BI terkini (2024–2026),
+termasuk POJK No. 29/2024 (ICS) dan POJK No. 11/2024 (SLIK fintech)
 
 Relevansi ke tema hackathon: credit trail Deschain berpotensi menjadi
 **data alternatif untuk ICS (Innovative Credit Scoring)** sesuai POJK No. 29/2024.

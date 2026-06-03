@@ -18,7 +18,7 @@ const TEAM = [
     nim: '—',
     email: '—',
     avatar: '👨‍🔬',
-    skills: ['Python', 'Machine Learning', 'DevOps', 'API Design'],
+    skills: ['Python', 'Machine Learning', 'QLoRA Fine-tuning', 'DevOps', 'API Design'],
     bio: 'Spesialis backend dan AI matching algorithm. Fokus pada skalabilitas sistem untuk jutaan pengguna UMKM Indonesia.',
   },
 ]
@@ -82,7 +82,7 @@ const ACHIEVEMENTS = [
   { icon: Award,       iconCls: 'text-amber-600 bg-amber-50',  label: 'BI-OJK Hackathon 2025', desc: 'Penghargaan Kategori Mahasiswa · Innovation Frontier 1' },
   { icon: GraduationCap, iconCls: 'text-blue-600 bg-blue-50', label: 'Universitas Tanjungpura', desc: 'Pontianak, Kalimantan Barat' },
   { icon: Handshake,   iconCls: 'text-green-600 bg-green-50',  label: 'PIDI-DIGDAYA X 2026', desc: 'Peserta · BI · OJK · AFTECH' },
-  { icon: TrendingUp,  iconCls: 'text-purple-600 bg-purple-50', label: '65,5 Juta Target', desc: 'UMKM Indonesia berpotensi' },
+  { icon: TrendingUp,  iconCls: 'text-purple-600 bg-purple-50', label: 'Fine-tuned AI Model', desc: 'joezy99/deschain-umkm-7b · HuggingFace' },
 ]
 
 const About = () => {
