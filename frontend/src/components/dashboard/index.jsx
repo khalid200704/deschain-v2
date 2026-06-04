@@ -2,7 +2,8 @@ import React from 'react'
 import { analyticsAPI } from '../../api/endpoints'
 import { Spinner } from '../common'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { Package, Wallet, CheckCircle, Star, TrendingUp, Clock } from 'lucide-react'
+import { Package, Wallet, CheckCircle, Star, TrendingUp, Clock, Download } from 'lucide-react'
+import apiClient from '../../api/client'
 
 const fmt = (n) => n?.toLocaleString('id-ID') ?? '0'
 
@@ -147,6 +148,25 @@ export const CreditTrail = () => {
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-navy-900">Credit Trail</h3>
+          <button
+            onClick={async () => {
+              try {
+                const res = await apiClient.get('/analytics/credit-trail/export')
+                const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = 'credit-trail-deschain.json'
+                a.click()
+                URL.revokeObjectURL(url)
+              } catch {}
+            }}
+            className="flex items-center gap-1 text-xs text-gold-600 hover:text-gold-700 bg-gold-50 hover:bg-gold-100 px-2 py-1 rounded-lg transition-colors"
+            title="Export untuk pengajuan KUR"
+          >
+            <Download size={11} />
+            Export
+          </button>
           {isDemo ? (
             <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Demo</span>
           ) : (

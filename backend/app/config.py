@@ -104,4 +104,9 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings() -> Settings:
     """Get cached settings instance"""
-    return Settings()
+    s = Settings()
+    if s.ENVIRONMENT == "production" and s.SECRET_KEY == "your-secret-key-change-in-production":
+        raise RuntimeError(
+            "SECRET_KEY belum diganti! Set environment variable SECRET_KEY dengan nilai random 64+ karakter."
+        )
+    return s

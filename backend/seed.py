@@ -13,6 +13,13 @@ import uuid
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+# Guard: jangan jalankan di production
+_env = os.environ.get("ENVIRONMENT", "development")
+if _env == "production":
+    print("ERROR: seed.py tidak boleh dijalankan di environment production!")
+    print("Set ENVIRONMENT=development atau jalankan dengan: ENVIRONMENT=development python seed.py")
+    sys.exit(1)
+
 from app.database import SessionLocal, engine, Base
 from app.models import (
     User, UMKM, Vendor, ProcurementRequest,

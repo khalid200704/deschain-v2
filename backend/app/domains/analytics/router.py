@@ -3,6 +3,7 @@ Analytics domain — dashboard KPIs, credit trail, savings trends
 """
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -225,3 +226,86 @@ async def get_savings(
 ):
     """Ringkasan penghematan pengguna"""
     return {"success": True, "data": {"message": "Coming soon"}}
+
+
+@router.get("/credit-trail/export")
+async def export_credit_trail(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Export credit trail sebagai JSON — bisa digunakan untuk pengajuan KUR/pembiayaan.
+
+    Data ini sesuai dengan kebutuhan ICS (Innovative Credit Scoring) per POJK No. 29/2024.
+    """
+    user_id = current_user["user_id"]
+    umkm = db.query(UMKM).filter(UMKM.user_id == user_id).first()
+
+    trail_data = []
+    total_savings = 0
+    total_value = 0
+
+    if umkm:
+        requests = db.query(ProcurementRequest).filter(
+            ProcurementRequest.umkm_id == umkm.id
+        ).order_by(ProcurementRequest.created_at.desc()).all()
+
+        memberships = db.query(GroupMembership).filter(
+            GroupMembership.umkm_id == umkm.id,
+            GroupMembership.status == "completed",
+        ).all()
+
+        group_ids = [m.group_id for m in memberships if m.group_id]
+        groups_by_id = {}
+        if group_ids:
+            groups = db.query(ProcurementGroup).filter(ProcurementGroup.id.in_(group_ids)).all()
+            groups_by_id = {g.id: g for g in groups}
+
+        for req in requests:
+            trail_data.append({
+                "tanggal": req.created_at.isoformat() if req.created_at else None,
+                "jenis": "Permintaan Pengadaan",
+                "produk": req.product_name,
+                "nilai_rp": req.budget,
+                "status": req.status,
+            })
+            total_value += req.budget or 0
+
+        for m in memberships:
+            group = groups_by_id.get(m.group_id)
+            savings = (m.individual_budget or 0) * (m.savings_percentage or 0) / 100
+            trail_data.append({
+                "tanggal": m.joined_at.isoformat() if m.joined_at else None,
+                "jenis": "Transaksi Kolektif",
+                "produk": group.group_name if group else "Grup Pengadaan",
+                "nilai_rp": m.individual_budget,
+                "penghematan_rp": round(savings),
+                "penghematan_persen": m.savings_percentage,
+                "status": "selesai",
+            })
+            total_savings += savings
+
+    export = {
+        "dokumen": "Credit Trail Deschain",
+        "versi_pojk": "POJK No. 29/2024 (ICS — Innovative Credit Scoring)",
+        "platform": "Deschain — Platform Pengadaan Kolektif AI untuk UMKM",
+        "pemilik": {
+            "nama": f"{umkm.owner_name}" if umkm else current_user.get("email"),
+            "usaha": umkm.business_name if umkm else "-",
+            "kota": umkm.city if umkm else "-",
+            "credit_score": umkm.credit_score if umkm else 0,
+        },
+        "ringkasan": {
+            "total_transaksi": len(trail_data),
+            "total_nilai_rp": total_value,
+            "total_penghematan_rp": round(total_savings),
+            "periode": "Sejak bergabung Deschain",
+        },
+        "riwayat": sorted(trail_data, key=lambda x: x.get("tanggal") or "", reverse=True),
+        "diekspor_pada": datetime.utcnow().isoformat(),
+        "catatan": "Dokumen ini merupakan rekam jejak transaksi digital UMKM yang dapat digunakan sebagai data alternatif pengajuan kredit/pembiayaan.",
+    }
+
+    return JSONResponse(
+        content={"success": True, "data": export},
+        headers={"Content-Disposition": "attachment; filename=credit-trail-deschain.json"},
+    )
