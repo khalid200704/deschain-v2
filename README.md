@@ -55,8 +55,8 @@ Deschain solves a critical problem for Indonesian UMKM:
 | **Authentication** | JWT + Bcrypt |
 | **State Management** | Zustand |
 | **Validation** | Pydantic V2 |
-| **Payment** | Midtrans |
-| **Notifications** | WhatsApp, Email |
+| **Payment** | Midtrans *(planned Phase 2)* |
+| **Notifications** | WhatsApp, Email *(planned Phase 2)* |
 | **Containers** | Docker + Docker Compose |
 
 ## 🚀 Quick Start

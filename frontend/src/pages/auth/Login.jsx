@@ -1,3 +1,4 @@
+// Halaman login — wrapper tipis di atas LoginForm yang menangani auth flow lengkap
 import React from 'react'
 import { LoginForm } from '../../components/forms/LoginForm'
 

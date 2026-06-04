@@ -62,6 +62,9 @@ def create_user(email, password, first_name, last_name, phone, user_type):
 
 
 def seed():
+    if db.query(User).filter(User.email == "demo@deschain.id").first():
+        print("Data sudah ada, skip seed.")
+        return
     clear_data()
 
     # ── Admin ─────────────────────────────────────────────────

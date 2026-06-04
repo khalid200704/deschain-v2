@@ -48,4 +48,5 @@ export const consultationAPI = {
 export const notificationAPI = {
   list: (unread = false, limit = 20) => apiClient.get('/notification/list', { params: { unread, limit } }),
   markAsRead: (notificationId) => apiClient.put(`/notification/${notificationId}/read`),
+  markAllRead: () => apiClient.put('/notification/read-all'),
 }
