@@ -32,7 +32,7 @@ export const DashboardMetrics = () => {
   const kpis = [
     {
       label: 'Total Pengadaan',
-      value: `Rp ${fmt(Math.round((metrics?.total_procurement_value ?? 0) / 1_000_000))}M`,
+      value: `Rp ${fmt(Math.round((metrics?.total_procurement_value ?? 0) / 1_000_000))} Jt`,
       sub: 'Nilai kumulatif',
       icon: Package,
       color: 'text-navy-900',
@@ -40,7 +40,7 @@ export const DashboardMetrics = () => {
     },
     {
       label: 'Total Penghematan',
-      value: `Rp ${fmt(Math.round((metrics?.total_savings ?? 0) / 1_000_000))}M`,
+      value: `Rp ${fmt(Math.round((metrics?.total_savings ?? 0) / 1_000_000))} Jt`,
       sub: `${metrics?.average_savings_percentage ?? 0}% rata-rata`,
       icon: Wallet,
       color: 'text-gold-500',
