@@ -190,7 +190,6 @@ const Consultation = () => {
               </div>
             </div>
           </div>
-          </div>
 
           {/* Chat area */}
           <div className="flex-1 overflow-y-auto space-y-4 pb-4">
