@@ -299,7 +299,7 @@ const GroupMatching = () => {
 
           {/* Hasil */}
           <div className="lg:col-span-3">
-            {!results && !loading && (
+            {!results && !batchResult && !loading && (
               <div className="bg-white rounded-2xl shadow-sm p-12 text-center border border-gray-100">
                 <div className="w-16 h-16 bg-navy-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Users size={28} className="text-navy-900" />

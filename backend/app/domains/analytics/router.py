@@ -422,11 +422,12 @@ async def get_forecast(
     smoothed    = _sma(series, WINDOW)
     forecasted  = _forecast_sma(series, WINDOW, horizon_weeks)
 
-    # EOQ — pakai budget rata-rata sebagai proxy harga satuan
-    weekly_avg  = sum(series) / len(series)
-    annual_dem  = weekly_avg * 52
-    avg_price   = sum(r.budget or 0 for r in history) / max(len(history), 1)
-    unit_price  = max(avg_price / max(weekly_avg, 1), 1_000)
+    # EOQ — unit price = total budget / total quantity (Rp per unit)
+    weekly_avg     = sum(series) / len(series)
+    annual_dem     = weekly_avg * 52
+    total_qty_all  = sum(r.quantity or 1 for r in history)
+    total_budg_all = sum(r.budget  or 0 for r in history)
+    unit_price     = max(total_budg_all / max(total_qty_all, 1), 1_000)
     eoq_qty     = _eoq(annual_dem, avg_unit_price=unit_price)
 
     today = datetime.utcnow()

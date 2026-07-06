@@ -363,6 +363,9 @@ async def join_group(
     umkm = _get_or_create_umkm(db, current_user["user_id"])
 
     # Cari atau buat ProcurementGroup
+    # Catatan: match results menggunakan ID truncated (bukan UUID penuh) —
+    # jika UUID parse gagal, langsung buat grup baru tanpa fallback ke category+city
+    # agar tidak salah bergabung ke grup yang tidak sesuai.
     group = None
     if body.group_id:
         try:
@@ -370,15 +373,7 @@ async def join_group(
                 ProcurementGroup.id == _uuid.UUID(body.group_id)
             ).first()
         except Exception:
-            pass
-
-    if not group:
-        # Cari grup terbuka yang cocok di DB
-        group = db.query(ProcurementGroup).filter(
-            ProcurementGroup.product_category == body.product_category,
-            ProcurementGroup.delivery_city == body.delivery_city,
-            ProcurementGroup.status == "forming",
-        ).first()
+            pass  # ID bukan UUID valid (e.g. demo/truncated) → buat grup baru
 
     if not group:
         # Buat grup baru
@@ -421,7 +416,10 @@ async def join_group(
     db.flush()
 
     # Buat keanggotaan grup
-    savings_pct = _savings_rate(group.member_count + 1) * 100
+    # member_count adalah jumlah anggota SEBELUM user ini bergabung.
+    # Penghematan kolektif dimulai dari 2 anggota — creator tunggal (count=0→1) belum ada manfaat.
+    new_count   = group.member_count + 1
+    savings_pct = _savings_rate(new_count) * 100 if new_count >= 2 else 0.0
     membership = GroupMembership(
         group_id=group.id,
         umkm_id=umkm.id,
@@ -640,19 +638,33 @@ async def batch_optimize(
         budget=body.budget,
         delivery_city=body.delivery_city,
         delivery_urgency=body.delivery_urgency,
-        preferred_delivery_date=datetime.utcnow() + timedelta(days=7),
+        preferred_delivery_date=datetime.utcnow() + timedelta(days={
+            "urgent": 2, "normal": 7, "flexible": 14,
+        }.get(body.delivery_urgency or "normal", 7)),
     )
     all_requests = active + [pseudo]
 
     # Kelompokkan berdasarkan window waktu 3 hari
     groups = _group_by_time(all_requests)
 
-    # Ambil vendor aktif di kota yang sama
+    # Ambil vendor aktif di kota yang sama, filter kategori (first word match)
+    category_kw = body.product_category.split()[0] if body.product_category else ""
     vendors = (
         db.query(Vendor)
-        .filter(Vendor.city == body.delivery_city, Vendor.is_active == True)
+        .filter(
+            Vendor.city == body.delivery_city,
+            Vendor.is_active == True,
+            Vendor.business_category.ilike(f"%{category_kw}%"),
+        )
         .all()
     )
+    # Fallback: jika tidak ada vendor dengan kategori cocok, pakai semua vendor aktif di kota
+    if not vendors:
+        vendors = (
+            db.query(Vendor)
+            .filter(Vendor.city == body.delivery_city, Vendor.is_active == True)
+            .all()
+        )
 
     result = _segment_dp_optimize(groups, vendors, body.budget)
 
