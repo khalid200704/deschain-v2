@@ -351,7 +351,7 @@ def _eoq(annual_demand: float, ordering_cost: float = 50_000,
     return max(1, int(sqrt(2 * annual_demand * ordering_cost / H)))
 
 
-def _demo_forecast(product_category: Optional[str]) -> dict:
+def _demo_forecast(product_category: Optional[str], horizon_weeks: int = 4) -> dict:
     """Demo forecast data untuk akun baru."""
     cat = product_category or "Sembako"
     today = datetime.utcnow()
@@ -367,7 +367,7 @@ def _demo_forecast(product_category: Optional[str]) -> dict:
                 "predicted_demand": round(50 + i * 5, 1),
                 "recommended_order": 120,
             }
-            for i in range(4)
+            for i in range(horizon_weeks)
         ],
         "eoq": {
             "recommended_order_qty": 120,
@@ -395,7 +395,7 @@ async def get_forecast(
     """
     umkm = db.query(UMKM).filter(UMKM.user_id == current_user["user_id"]).first()
     if not umkm:
-        return {"success": True, "data": _demo_forecast(product_category)}
+        return {"success": True, "data": _demo_forecast(product_category, horizon_weeks)}
 
     q = db.query(ProcurementRequest).filter(ProcurementRequest.umkm_id == umkm.id)
     if product_category:
@@ -403,7 +403,7 @@ async def get_forecast(
     history = q.order_by(ProcurementRequest.created_at).all()
 
     if not history:
-        return {"success": True, "data": _demo_forecast(product_category)}
+        return {"success": True, "data": _demo_forecast(product_category, horizon_weeks)}
 
     # Kelompokkan quantity per minggu (YYYY-WNN)
     weekly: dict = defaultdict(float)
@@ -416,7 +416,7 @@ async def get_forecast(
     series = [weekly[w] for w in sorted_weeks]
 
     if not series:
-        return {"success": True, "data": _demo_forecast(product_category)}
+        return {"success": True, "data": _demo_forecast(product_category, horizon_weeks)}
 
     WINDOW = 7
     smoothed    = _sma(series, WINDOW)
