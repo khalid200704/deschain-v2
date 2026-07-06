@@ -130,7 +130,7 @@ def seed():
     umkm10 = mk_umkm(u10, "Surya Elektronik & Spare Part", "Elektronik", "Pontianak", "Kalimantan Barat", 520_000_000, 7, 4.4, 9, 55_000_000)
 
     # ── Vendor Profiles ───────────────────────────────────────
-    def mk_vendor(user, name, category, city, province, rel_score=4.5, orders=120):
+    def mk_vendor(user, name, category, city, province, rel_score=4.5, orders=120, moq=50, tiers=None):
         v = Vendor(
             id=uuid.uuid4(),
             user_id=user.id,
@@ -142,18 +142,58 @@ def seed():
             reliability_score=rel_score,
             total_orders=orders,
             is_active=True,
-            min_order_quantity=50,
+            min_order_quantity=moq,
+            discount_tiers=tiers or [],
             average_lead_time_days=3,
             created_at=datetime.utcnow() - timedelta(days=365),
         )
         db.add(v)
         return v
 
-    vendor1 = mk_vendor(v_user1, "PT Agro Nusantara Mandiri", "Sembako & Pertanian", "Pontianak", "Kalimantan Barat", 4.8, 250)
-    vendor2 = mk_vendor(v_user2, "UD Indo Grosir Utama", "Sembako", "Pontianak", "Kalimantan Barat", 4.5, 180)
-    vendor3 = mk_vendor(v_user3, "CV Kaltim Supply Chain", "Bahan Bangunan", "Balikpapan", "Kalimantan Timur", 4.3, 120)
-    vendor4 = mk_vendor(v_user4, "PT Tekstil Borneo Indah", "Tekstil & Kain", "Pontianak", "Kalimantan Barat", 4.6, 95)
-    vendor5 = mk_vendor(v_user5, "UD Mitra Kemasan Plastik", "Plastik & Kemasan", "Kubu Raya", "Kalimantan Barat", 4.2, 78)
+    vendor1 = mk_vendor(
+        v_user1, "PT Agro Nusantara Mandiri", "Sembako & Pertanian", "Pontianak", "Kalimantan Barat",
+        rel_score=4.8, orders=250, moq=100,
+        tiers=[
+            {"min_qty": 100,  "discount": 0.05},
+            {"min_qty": 500,  "discount": 0.10},
+            {"min_qty": 1000, "discount": 0.15},
+            {"min_qty": 2000, "discount": 0.20},
+        ],
+    )
+    vendor2 = mk_vendor(
+        v_user2, "UD Indo Grosir Utama", "Sembako", "Pontianak", "Kalimantan Barat",
+        rel_score=4.5, orders=180, moq=50,
+        tiers=[
+            {"min_qty": 50,  "discount": 0.03},
+            {"min_qty": 300, "discount": 0.08},
+            {"min_qty": 800, "discount": 0.12},
+        ],
+    )
+    vendor3 = mk_vendor(
+        v_user3, "CV Kaltim Supply Chain", "Bahan Bangunan", "Balikpapan", "Kalimantan Timur",
+        rel_score=4.3, orders=120, moq=200,
+        tiers=[
+            {"min_qty": 200, "discount": 0.05},
+            {"min_qty": 600, "discount": 0.10},
+        ],
+    )
+    vendor4 = mk_vendor(
+        v_user4, "PT Tekstil Borneo Indah", "Tekstil & Kain", "Pontianak", "Kalimantan Barat",
+        rel_score=4.6, orders=95, moq=50,
+        tiers=[
+            {"min_qty": 50,  "discount": 0.04},
+            {"min_qty": 200, "discount": 0.09},
+            {"min_qty": 500, "discount": 0.14},
+        ],
+    )
+    vendor5 = mk_vendor(
+        v_user5, "UD Mitra Kemasan Plastik", "Plastik & Kemasan", "Kubu Raya", "Kalimantan Barat",
+        rel_score=4.2, orders=78, moq=50,
+        tiers=[
+            {"min_qty": 50,  "discount": 0.03},
+            {"min_qty": 250, "discount": 0.07},
+        ],
+    )
 
     db.flush()
 

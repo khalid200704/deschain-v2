@@ -113,6 +113,7 @@ class Vendor(Base):
     longitude = Column(Float)
     product_categories = Column(JSON)
     min_order_quantity = Column(Integer)
+    discount_tiers = Column(JSON, default=list)  # [{min_qty, discount}, ...]
     average_lead_time_days = Column(Integer)
     verification_status = Column(String(50), default="pending", index=True)
     reliability_score = Column(Float, default=0)

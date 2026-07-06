@@ -5,7 +5,7 @@ import { useUIStore } from '../../stores'
 import { ProtectedRoute } from '../../components/common/ProtectedRoute'
 import apiClient from '../../api/client'
 import { matchingAPI } from '../../api/endpoints'
-import { Menu, Search, Users, CheckCircle } from 'lucide-react'
+import { Menu, Search, Users, CheckCircle, Layers } from 'lucide-react'
 
 const CATEGORIES = [
   'Sembako', 'Beras & Biji-bijian', 'Minyak & Lemak', 'Sayur & Buah',
@@ -36,6 +36,8 @@ const GroupMatching = () => {
   })
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState(null)
+  const [batchResult, setBatchResult] = useState(null)
+  const [mode, setMode] = useState('match') // 'match' | 'batch'
   const [errors, setErrors] = useState({})
   const [joining, setJoining] = useState(null)
   const [joined, setJoined] = useState({})
@@ -45,20 +47,24 @@ const GroupMatching = () => {
     if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: '' })
   }
 
+  const validate = () => {
+    const e = {}
+    if (!form.product_name.trim()) e.product_name = 'Nama produk wajib diisi'
+    if (!form.quantity || parseFloat(form.quantity) <= 0) e.quantity = 'Kuantitas harus lebih dari 0'
+    if (!form.budget || parseFloat(form.budget) <= 0) e.budget = 'Budget harus lebih dari 0'
+    if (!form.delivery_city.trim()) e.delivery_city = 'Kota pengiriman wajib diisi'
+    return e
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const newErrors = {}
-    if (!form.product_name.trim()) newErrors.product_name = 'Nama produk wajib diisi'
-    if (!form.quantity || parseFloat(form.quantity) <= 0) newErrors.quantity = 'Kuantitas harus lebih dari 0'
-    if (!form.budget || parseFloat(form.budget) <= 0) newErrors.budget = 'Budget harus lebih dari 0'
-    if (!form.delivery_city.trim()) newErrors.delivery_city = 'Kota pengiriman wajib diisi'
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-      return
-    }
+    const newErrors = validate()
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
     setErrors({})
+    setMode('match')
     setLoading(true)
     setResults(null)
+    setBatchResult(null)
     try {
       const res = await apiClient.post('/matching/groups/match', {
         ...form,
@@ -69,6 +75,28 @@ const GroupMatching = () => {
       else setErrors({ general: res.message || 'Gagal mencari grup.' })
     } catch (err) {
       setErrors({ general: err?.detail || 'Gagal mencari grup. Pastikan Anda sudah login.' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleBatchOptimize = async () => {
+    const newErrors = validate()
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
+    setErrors({})
+    setLoading(true)
+    setResults(null)
+    setBatchResult(null)
+    try {
+      const res = await matchingAPI.batchOptimize({
+        ...form,
+        quantity: parseFloat(form.quantity),
+        budget: parseFloat(form.budget),
+      })
+      if (res.success) setBatchResult(res.data)
+      else setErrors({ general: res.message || 'Gagal optimasi batch.' })
+    } catch (err) {
+      setErrors({ general: err?.detail || 'Gagal optimasi batch.' })
     } finally {
       setLoading(false)
     }
@@ -227,23 +255,44 @@ const GroupMatching = () => {
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 bg-gold-500 text-white font-bold rounded-xl hover:bg-gold-600 transition-colors disabled:opacity-50"
-                >
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Mencari grup...
-                    </span>
-                  ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      <Search size={15} />
-                      Cari Grup Sekarang
-                    </span>
-                  )}
-                </button>
+                <div className="space-y-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 bg-gold-500 text-white font-bold rounded-xl hover:bg-gold-600 transition-colors disabled:opacity-50"
+                  >
+                    {loading && mode === 'match' ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Mencari grup...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <Search size={15} />
+                        Cari Grup (AI Match)
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() => { setMode('batch'); handleBatchOptimize() }}
+                    className="w-full py-3 bg-navy-900 text-white font-bold rounded-xl hover:bg-navy-800 transition-colors disabled:opacity-50"
+                  >
+                    {loading && mode === 'batch' ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Mengoptimasi...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <Layers size={15} />
+                        Optimasi Batch
+                      </span>
+                    )}
+                  </button>
+                </div>
               </form>
             </div>
           </div>
@@ -267,6 +316,83 @@ const GroupMatching = () => {
                 <div className="w-12 h-12 border-4 border-gray-100 border-t-gold-500 rounded-full animate-spin mx-auto mb-4" />
                 <p className="text-navy-900 font-medium text-sm">Menganalisis kebutuhan Anda...</p>
                 <p className="text-gray-400 text-xs mt-1">Mencari UMKM dengan kebutuhan serupa di {form.delivery_city}</p>
+              </div>
+            )}
+
+            {/* Batch Optimize Results */}
+            {batchResult && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-navy-900">Hasil Optimasi Batch</h2>
+                </div>
+
+                {/* Summary */}
+                <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Total Budget</div>
+                      <div className="font-bold text-navy-900 text-sm">
+                        Rp {batchResult.total_original_cost?.toLocaleString('id-ID')}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Setelah Diskon</div>
+                      <div className="font-bold text-green-700 text-sm">
+                        Rp {batchResult.total_optimized_cost?.toLocaleString('id-ID')}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Total Hemat</div>
+                      <div className="font-bold text-green-600 text-lg">
+                        {batchResult.savings_pct}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Batch cards */}
+                {batchResult.batches?.map((batch, i) => (
+                  <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 bg-navy-900 text-white rounded-lg flex items-center justify-center text-xs font-bold">
+                          {i + 1}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-navy-900 text-sm">Batch {i + 1}</div>
+                          <div className="text-xs text-gray-400">{batch.member_count} anggota · {batch.total_quantity} unit total</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-green-600 font-bold">{batch.discount_pct}% diskon</div>
+                        <div className="text-xs text-gray-400">dari vendor</div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                      <div className="bg-gray-50 rounded-lg p-2">
+                        <div className="text-xs text-gray-500">Vendor</div>
+                        <div className="font-medium text-navy-900 text-xs mt-0.5">{batch.vendor_name}</div>
+                      </div>
+                      <div className="bg-green-50 rounded-lg p-2">
+                        <div className="text-xs text-gray-500">Penghematan</div>
+                        <div className="font-bold text-green-700 text-xs mt-0.5">
+                          Rp {batch.savings?.toLocaleString('id-ID')}
+                        </div>
+                      </div>
+                    </div>
+
+                    {batch.earliest_deadline && (
+                      <div className="text-xs text-gray-400">
+                        📅 {batch.earliest_deadline}
+                        {batch.latest_deadline && batch.latest_deadline !== batch.earliest_deadline
+                          ? ` — ${batch.latest_deadline}`
+                          : ''}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
               </div>
             )}
 

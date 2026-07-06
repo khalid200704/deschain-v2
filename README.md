@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Hackathon](https://img.shields.io/badge/PIDI--DIGDAYA_X-2026-gold)
 
-**Finalis PIDI-DIGDAYA X Hackathon 2026 · BI · OJK · AFTECH**
+**Semifinalis BI-OJK Hackathon 2025 · Innovation Frontier 1 · Peserta PIDI-DIGDAYA X 2026**
 
 > Hemat 15–25% biaya pengadaan UMKM melalui group buying bertenaga AI.
 
@@ -182,35 +182,56 @@ deschain/
 - `GET /vendor/search` - Search vendors
 
 ### Matching
-- `GET /matching/vendors/{requestId}` - Vendor suggestions
-- `GET /matching/requests/{requestId}` - Similar requests
-- `GET /matching/groups/{requestId}` - Group suggestions
-
-### Payments
-- `POST /payment/order` - Create order
-- `GET /transaction/{id}` - Transaction details
-- `GET /transaction/history` - Transaction history
+- `POST /matching/groups/match` - Cari grup dengan kebutuhan serupa
+- `POST /matching/groups/join` - Bergabung ke grup pengadaan
+- `POST /matching/batch-optimize` - Optimasi batch ke vendor
 
 ### Analytics
-- `GET /analytics/dashboard` - Dashboard metrics
-- `GET /analytics/credit-score` - Credit score
-- `GET /analytics/savings` - Savings summary
+- `GET /analytics/dashboard` - Dashboard KPI metrics
+- `GET /analytics/credit-trail` - Riwayat transaksi (credit trail)
+- `GET /analytics/credit-trail/export` - Export JSON untuk KUR/ICS POJK 29/2024
+- `GET /analytics/forecast` - Prediksi demand + rekomendasi lot sizing
+
+### Consultation
+- `POST /consultation/ask` - Tanya AI konsultan UMKM (RAG)
+- `GET /consultation/topics` - Daftar topik yang tersedia
+
+### Notification
+- `GET /notification/list` - Daftar notifikasi
+- `PUT /notification/{id}/read` - Tandai dibaca
+- `PUT /notification/read-all` - Tandai semua dibaca
 
 Full documentation: [API_DESIGN.md](docs/API_DESIGN.md)
 
-## 🤖 AI Matching Algorithm
+## 🤖 Core Intelligence
 
-The matching service intelligently groups similar procurement requests:
+Deschain menggunakan tiga lapis algoritma optimasi yang bekerja secara berlapis untuk memberikan hasil terbaik bagi setiap pengguna.
 
-1. **Kesamaan kategori produk** (40%): String matching
-2. **Kesamaan kota pengiriman** (30%): City matching
-3. **Kesesuaian budget** (20%): Ratio-based scoring
-4. **Kesamaan urgency** (10%): Exact match
+### 1. AI Group Matching
+Mencocokkan permintaan pengadaan UMKM berdasarkan empat dimensi kesamaan:
+- Kategori produk (bobot 40%)
+- Kota pengiriman (30%)
+- Kesesuaian budget (20%)
+- Urgensi pengiriman (10%)
 
-Example:
-- Request A: 100kg Rice, Bandung, June 10
-- Request B: 150kg Rice, Bandung, June 12
-- Similarity Score: 0.92 → Grouped with 12% bulk discount
+Hasil: rekomendasi grup dengan estimasi penghematan per anggota.
+
+### 2. Optimal Group Composition
+Setelah kandidat diidentifikasi, sistem menentukan komposisi grup yang memaksimalkan total penghematan kolektif — mempertimbangkan ukuran grup dan skala volume pembelian.
+
+Hasil: penghematan meningkat seiring pertumbuhan anggota (8% → 25% pada skala tertentu).
+
+### 3. Batch Procurement Optimizer
+Mengoptimalkan pengelompokan batch pesanan ke vendor dengan mempertimbangkan discount tier berdasarkan volume dan window waktu pengiriman.
+
+Hasil: total biaya pengadaan kolektif yang minimum dengan pemilihan vendor otomatis.
+
+### 4. Demand Forecasting & Lot Sizing
+Memprediksi kebutuhan pengadaan ke depan berdasarkan histori transaksi, dan menghitung ukuran order optimal yang meminimalkan total biaya pemesanan + penyimpanan.
+
+Hasil: jadwal reorder dan kuantitas order yang direkomendasikan per UMKM.
+
+---
 
 Details: [AI_MATCHING.md](docs/AI_MATCHING.md)
 

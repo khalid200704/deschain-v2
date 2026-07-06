@@ -2,7 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore, useAuthStore } from '../../stores'
 import { DashboardLayout } from '../../components/layouts'
-import { DashboardMetrics, CreditTrail } from '../../components/dashboard'
+import { DashboardMetrics, CreditTrail, ForecastWidget } from '../../components/dashboard'
 import { ProtectedRoute } from '../../components/common/ProtectedRoute'
 import { Users, ShoppingCart, Store, Menu } from 'lucide-react'
 
@@ -64,9 +64,14 @@ const DashboardPage = () => {
 
         <DashboardMetrics />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CreditTrail />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <CreditTrail />
+          </div>
+          <ForecastWidget />
+        </div>
 
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <h3 className="text-sm font-semibold text-navy-900 mb-4">Aksi Cepat</h3>
             <div className="space-y-2">
@@ -100,6 +105,7 @@ const DashboardPage = () => {
           </div>
         </div>
       </DashboardLayout>
+
     </ProtectedRoute>
   )
 }

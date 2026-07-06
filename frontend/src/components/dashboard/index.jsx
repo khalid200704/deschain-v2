@@ -2,7 +2,7 @@ import React from 'react'
 import { analyticsAPI } from '../../api/endpoints'
 import { Spinner } from '../common'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { Package, Wallet, CheckCircle, Star, TrendingUp, Clock, Download } from 'lucide-react'
+import { Package, Wallet, CheckCircle, Star, TrendingUp, Clock, Download, BarChart2, ShoppingBag } from 'lucide-react'
 import apiClient from '../../api/client'
 
 const fmt = (n) => n?.toLocaleString('id-ID') ?? '0'
@@ -215,6 +215,78 @@ export const CreditTrail = () => {
           💡 Bergabung ke grup pengadaan untuk memulai credit trail nyata Anda
         </p>
       )}
+    </div>
+  )
+}
+
+export const ForecastWidget = () => {
+  const [data, setData] = React.useState(null)
+  const [loading, setLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    analyticsAPI.getForecast(null, 4)
+      .then((res) => { if (res.success) setData(res.data) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return (
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex justify-center py-12">
+      <Spinner />
+    </div>
+  )
+  if (!data) return null
+
+  return (
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+            <BarChart2 size={15} className="text-blue-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-navy-900">Prediksi Demand</h3>
+            <p className="text-xs text-gray-400">{data.product_category}</p>
+          </div>
+        </div>
+        {data.is_demo && (
+          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Demo</span>
+        )}
+      </div>
+
+      {/* EOQ Highlight */}
+      <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-4 flex items-center gap-3">
+        <ShoppingBag size={16} className="text-blue-600 flex-shrink-0" />
+        <div>
+          <div className="text-xs text-blue-600 font-medium">Rekomendasi Order (EOQ)</div>
+          <div className="text-lg font-bold text-blue-800">
+            {data.eoq?.recommended_order_qty?.toLocaleString('id-ID')} unit/order
+          </div>
+          <div className="text-xs text-blue-500">
+            Rata-rata demand: {data.eoq?.weekly_avg_demand?.toLocaleString('id-ID')} unit/minggu
+          </div>
+        </div>
+      </div>
+
+      {/* Forecast table */}
+      <div className="space-y-1.5">
+        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">4 Minggu ke Depan</div>
+        {data.forecast?.map((row, i) => (
+          <div
+            key={row.week}
+            className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm ${
+              i === 0 ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50'
+            }`}
+          >
+            <span className="text-gray-500 text-xs">{row.date}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-gray-600 text-xs">demand: <strong>{row.predicted_demand}</strong></span>
+              <span className="text-blue-700 text-xs font-semibold">order: {row.recommended_order}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
     </div>
   )
 }

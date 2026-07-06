@@ -1,8 +1,11 @@
 """
-Analytics domain — dashboard KPIs, credit trail, savings trends
+Analytics domain — dashboard KPIs, credit trail, savings trends, demand forecast (SMA + EOQ).
 """
+from collections import defaultdict
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends
+from math import sqrt
+from typing import Optional
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -309,3 +312,147 @@ async def export_credit_trail(
         content={"success": True, "data": export},
         headers={"Content-Disposition": "attachment; filename=credit-trail-deschain.json"},
     )
+
+
+# ---------------------------------------------------------------------------
+# Demand Forecasting — SMA + EOQ (dari Forcasting_&_lot_sizing.ipynb)
+# ---------------------------------------------------------------------------
+
+def _sma(series: list, window: int) -> list:
+    """
+    Simple Moving Average: rata-rata bergerak dari window terakhir.
+    Sesuai implementasi notebook AutoSelectorSystem.
+    """
+    result = []
+    for i in range(len(series)):
+        start = max(0, i - window + 1)
+        result.append(round(sum(series[start : i + 1]) / (i - start + 1), 2))
+    return result
+
+
+def _forecast_sma(series: list, window: int, horizon: int) -> list:
+    """Project SMA ke depan sejumlah horizon langkah."""
+    if not series:
+        return [0.0] * horizon
+    last_avg = sum(series[-window:]) / min(window, len(series))
+    return [round(last_avg, 2)] * horizon
+
+
+def _eoq(annual_demand: float, ordering_cost: float = 50_000,
+          holding_rate: float = 0.20, avg_unit_price: float = 10_000) -> int:
+    """
+    Economic Order Quantity: EOQ = sqrt(2 × D × S / H)
+    D = permintaan tahunan, S = biaya pesan per order, H = biaya simpan per unit/tahun.
+    Implementasi langsung dari economic_order_quantity() di notebook.
+    """
+    H = holding_rate * max(avg_unit_price, 1)
+    if H <= 0 or annual_demand <= 0:
+        return 0
+    return max(1, int(sqrt(2 * annual_demand * ordering_cost / H)))
+
+
+def _demo_forecast(product_category: Optional[str]) -> dict:
+    """Demo forecast data untuk akun baru."""
+    cat = product_category or "Sembako"
+    today = datetime.utcnow()
+    return {
+        "product_category": cat,
+        "historical_weeks": 0,
+        "weekly_history": [],
+        "smoothed": [],
+        "forecast": [
+            {
+                "week": (today + timedelta(weeks=i + 1)).strftime("%Y-W%U"),
+                "date": (today + timedelta(weeks=i + 1)).strftime("%Y-%m-%d"),
+                "predicted_demand": round(50 + i * 5, 1),
+                "recommended_order": 120,
+            }
+            for i in range(4)
+        ],
+        "eoq": {
+            "recommended_order_qty": 120,
+            "weekly_avg_demand": 50.0,
+            "annual_demand_estimate": 2600.0,
+        },
+        "is_demo": True,
+    }
+
+
+@router.get("/forecast")
+async def get_forecast(
+    product_category: Optional[str] = Query(None),
+    horizon_weeks: int = Query(4, ge=1, le=12),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Demand forecast menggunakan Simple Moving Average (window = 7 minggu) + EOQ.
+
+    Sumber data: riwayat ProcurementRequest UMKM dikelompokkan per minggu.
+    Algoritma:
+      1. SMA(7) untuk smoothing dan proyeksi demand ke depan
+      2. EOQ = sqrt(2DS/H) untuk ukuran order optimal (minimasi biaya pesan + simpan)
+    """
+    umkm = db.query(UMKM).filter(UMKM.user_id == current_user["user_id"]).first()
+    if not umkm:
+        return {"success": True, "data": _demo_forecast(product_category)}
+
+    q = db.query(ProcurementRequest).filter(ProcurementRequest.umkm_id == umkm.id)
+    if product_category:
+        q = q.filter(ProcurementRequest.product_category == product_category)
+    history = q.order_by(ProcurementRequest.created_at).all()
+
+    if not history:
+        return {"success": True, "data": _demo_forecast(product_category)}
+
+    # Kelompokkan quantity per minggu (YYYY-WNN)
+    weekly: dict = defaultdict(float)
+    for req in history:
+        if req.created_at and req.quantity:
+            week_key = req.created_at.strftime("%Y-W%U")
+            weekly[week_key] += req.quantity
+
+    sorted_weeks = sorted(weekly.keys())
+    series = [weekly[w] for w in sorted_weeks]
+
+    if not series:
+        return {"success": True, "data": _demo_forecast(product_category)}
+
+    WINDOW = 7
+    smoothed    = _sma(series, WINDOW)
+    forecasted  = _forecast_sma(series, WINDOW, horizon_weeks)
+
+    # EOQ — pakai budget rata-rata sebagai proxy harga satuan
+    weekly_avg  = sum(series) / len(series)
+    annual_dem  = weekly_avg * 52
+    avg_price   = sum(r.budget or 0 for r in history) / max(len(history), 1)
+    unit_price  = max(avg_price / max(weekly_avg, 1), 1_000)
+    eoq_qty     = _eoq(annual_dem, avg_unit_price=unit_price)
+
+    today = datetime.utcnow()
+    reorder_schedule = [
+        {
+            "week"            : (today + timedelta(weeks=i + 1)).strftime("%Y-W%U"),
+            "date"            : (today + timedelta(weeks=i + 1)).strftime("%Y-%m-%d"),
+            "predicted_demand": forecasted[i],
+            "recommended_order": eoq_qty,
+        }
+        for i in range(horizon_weeks)
+    ]
+
+    return {
+        "success": True,
+        "data": {
+            "product_category": product_category or "Semua Kategori",
+            "historical_weeks": len(series),
+            "weekly_history"  : [{"week": w, "quantity": weekly[w]} for w in sorted_weeks[-12:]],
+            "smoothed"        : smoothed[-12:],
+            "forecast"        : reorder_schedule,
+            "eoq": {
+                "recommended_order_qty": eoq_qty,
+                "weekly_avg_demand"    : round(weekly_avg, 2),
+                "annual_demand_estimate": round(annual_dem, 2),
+            },
+            "is_demo": False,
+        },
+    }

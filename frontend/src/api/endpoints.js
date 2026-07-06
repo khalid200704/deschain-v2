@@ -25,6 +25,7 @@ export const vendorAPI = {
 export const matchingAPI = {
   match: (data) => apiClient.post('/matching/groups/match', data),
   joinGroup: (data) => apiClient.post('/matching/groups/join', data),
+  batchOptimize: (data) => apiClient.post('/matching/batch-optimize', data),
 }
 
 // Transaction APIs
@@ -36,6 +37,8 @@ export const transactionAPI = {
 export const analyticsAPI = {
   getDashboard: () => apiClient.get('/analytics/dashboard'),
   getCreditTrail: () => apiClient.get('/analytics/credit-trail'),
+  getForecast: (category, horizonWeeks = 4) =>
+    apiClient.get('/analytics/forecast', { params: { product_category: category, horizon_weeks: horizonWeeks } }),
 }
 
 // Consultation APIs

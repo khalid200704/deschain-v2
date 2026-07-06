@@ -149,11 +149,11 @@ export const Sidebar = ({ isOpen, onClose }) => {
 }
 
 export const DashboardLayout = ({ children, sidebarOpen, onToggle }) => (
-  <div className="min-h-screen bg-gray-50">
+  <div className="h-screen overflow-hidden bg-gray-50 flex flex-col">
     <Navbar />
-    <div className="flex">
+    <div className="flex flex-1 overflow-hidden">
       <Sidebar isOpen={sidebarOpen} onClose={onToggle} />
-      <main className="flex-1 min-w-0 p-6 lg:ml-60 transition-all duration-300">
+      <main className="flex-1 min-w-0 overflow-y-auto p-6 lg:ml-60 transition-all duration-300">
         {children}
       </main>
     </div>
