@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deschain — Animasi Video Penuh</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#000;overflow:hidden}
+  .frame{position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .8s ease;background:#000}
+  .frame.show{opacity:1}
+  .label{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:20;background:rgba(15,31,13,.85);color:#B4CF3D;
+    font-family:system-ui,sans-serif;font-weight:600;font-size:13px;padding:6px 14px;border-radius:99px;letter-spacing:.3px;opacity:.9;transition:opacity .4s}
+  .label.hide{opacity:0}
+  .ctrl{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:8px;transition:opacity .4s}
+  .ctrl.hide{opacity:0;pointer-events:none}
+  .ctrl button{background:#49913E;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-family:system-ui,sans-serif;font-weight:600;font-size:13px;cursor:pointer}
+  .ctrl button.sec{background:#1d2b18;color:#cfe6c9}
+</style>
+</head>
+<body>
+  <iframe class="frame" id="fMotion" src="Deschain-Motion-Graphic.html?clean=1"></iframe>
+  <iframe class="frame" id="fDemo" src="Deschain-Demo-Otomatis.html?clean=1"></iframe>
+  <div class="label" id="label">Bagian 1 · Pitch</div>
+  <div class="ctrl" id="ctrl">
+    <button class="sec" id="toMotion">1 · Pitch</button>
+    <button class="sec" id="toDemo">2 · Demo</button>
+    <button id="replay">↻ Putar dari awal</button>
+  </div>
+<script>
+  const fMotion=document.getElementById('fMotion'), fDemo=document.getElementById('fDemo');
+  const label=document.getElementById('label'), ctrl=document.getElementById('ctrl');
+  const MOTION_MS=54000;   // durasi bagian pitch (satu putaran motion graphic)
+  let timer=null;
+  function reload(f){f.src=f.src;} // restart animasi di dalam iframe
+  function setLabel(t){label.textContent=t;label.classList.remove('hide');}
+  function showMotion(restart){
+    if(restart)reload(fMotion);
+    fMotion.classList.add('show');fDemo.classList.remove('show');
+    setLabel('Bagian 1 · Pitch');
+  }
+  function showDemo(restart){
+    if(restart)reload(fDemo);
+    // beri jeda agar demo mulai dari awal sebelum tampil
+    setTimeout(()=>{fDemo.classList.add('show');fMotion.classList.remove('show');setLabel('Bagian 2 · Demo Produk');},700);
+  }
+  function playAll(){
+    clearTimeout(timer);
+    showMotion(true);
+    timer=setTimeout(()=>{ showDemo(true); }, MOTION_MS);
+  }
+  document.getElementById('toMotion').onclick=()=>{clearTimeout(timer);showMotion(true);};
+  document.getElementById('toDemo').onclick=()=>{clearTimeout(timer);showDemo(true);};
+  document.getElementById('replay').onclick=()=>playAll();
+  // sembunyikan label & kontrol otomatis agar bersih saat direkam
+  let hideT;
+  function autohide(){clearTimeout(hideT);ctrl.classList.remove('hide');label.classList.remove('hide');
+    hideT=setTimeout(()=>{ctrl.classList.add('hide');label.classList.add('hide');},3000);}
+  document.addEventListener('mousemove',autohide);
+  window.addEventListener('load',()=>{ playAll(); autohide(); });
+</script>
+</body>
+</html>

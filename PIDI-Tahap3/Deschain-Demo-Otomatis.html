@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deschain — Demo Otomatis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--side:#0F1F0D;--brand:#49913E;--brand2:#6DB863;--bg:#F4F7F4;--card:#fff;--ink:#16281a;--mut:#5f7261;--line:#e4ede3;--danger:#c65b4a;--blue:#5b8def;--amber:#e6a417}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{font-family:'Inter',sans-serif;background:#0b0f0a;color:var(--ink);overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .stage{position:relative;width:min(100vw,177.78vh);height:min(56.25vw,100vh);background:var(--bg);overflow:hidden;cursor:none}
+  .app{display:flex;height:100%}
+  .side{width:15%;min-width:150px;background:var(--side);color:#cfe0c8;display:flex;flex-direction:column;flex:none}
+  .brand{padding:18px 16px 12px}
+  .brand b{font-family:'Poppins';font-weight:700;color:#fff;font-size:18px}
+  .nav{padding:6px}
+  .nav a{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;color:#a9c0a0;font-size:12.5px;font-weight:500;margin-bottom:2px}
+  .nav a .ic{width:16px;height:16px;flex:none}
+  .nav a.on{background:var(--brand);color:#fff}
+  .side .foot{margin-top:auto;padding:12px 16px;color:#5c7355;font-size:11px;border-top:1px solid #1b2c14}
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .top{height:52px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:flex-end;gap:14px;padding:0 20px;flex:none}
+  .bell{position:relative;color:var(--mut)}
+  .bell .b{position:absolute;top:-6px;right:-6px;background:var(--brand2);color:#fff;font-size:9px;font-weight:700;border-radius:99px;padding:1px 5px}
+  .user{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500}
+  .user .av{width:28px;height:28px;border-radius:99px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+  .btnlk{color:var(--mut);font-size:13px;display:flex;align-items:center;gap:5px}
+  .content{flex:1;overflow:auto;padding:20px 22px}.content::-webkit-scrollbar{width:0;height:0}
+  .sec{display:none}.sec.on{display:block}
+  h1{font-family:'Poppins';font-weight:700;font-size:19px}
+  .subt{color:var(--mut);font-size:12.5px;margin:2px 0 16px}
+  .badgesim{background:#fff4e5;color:#b9791f;font-size:10px;font-weight:600;border-radius:99px;padding:2px 7px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+  .kpi .ic{width:30px;height:30px;border-radius:8px;background:#eef6ec;color:var(--brand);display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+  .kpi .lb{color:var(--mut);font-size:11.5px}
+  .kpi .vl{font-family:'Poppins';font-weight:800;font-size:21px;margin-top:2px}
+  .kpi .vl.g{color:var(--brand)}
+  .kpi .sm{color:var(--mut);font-size:10.5px;margin-top:2px}
+  .two{display:grid;grid-template-columns:1.3fr 1fr;gap:12px}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px}
+  .panel h3{font-family:'Poppins';font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:space-between}
+  .badge{background:#eef6ec;color:var(--brand);font-size:11px;font-weight:600;border-radius:99px;padding:3px 9px}
+  .tl{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+  .tli{display:flex;align-items:center;gap:10px;background:#f3f8f1;border-radius:9px;padding:9px 12px}
+  .tli.blue{background:#eef3fb}
+  .tli .dot{width:8px;height:8px;border-radius:99px;background:var(--brand2);flex:none}
+  .tli .dot.b{background:var(--blue)}
+  .tli .tx{flex:1;font-size:12px;font-weight:500}
+  .tli .tx span{display:block;color:var(--mut);font-weight:400;font-size:11px}
+  .tli .sv{font-family:'Poppins';font-weight:700;color:var(--brand);font-size:12.5px;white-space:nowrap}
+  .qa{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+  .qbtn{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:11px 12px;text-align:left}
+  .qbtn .ic{width:30px;height:30px;border-radius:8px;background:#eef6ec;color:var(--brand);display:flex;align-items:center;justify-content:center;flex:none}
+  .qbtn b{font-size:13px}.qbtn span{display:block;color:var(--mut);font-size:11px}
+  .tip{margin-top:12px;background:#fff8e8;border:1px solid #f0e2c0;color:#8a6d2f;border-radius:9px;padding:10px 12px;font-size:11.5px}
+  label{display:block;font-size:12px;font-weight:600;margin:11px 0 5px}
+  label .req{color:var(--danger)}
+  input,select{width:100%;height:38px;border:1px solid var(--line);border-radius:9px;padding:0 11px;font-family:inherit;font-size:13px;background:#fff;color:var(--ink)}
+  input.foc,select.foc{border-color:var(--brand2);box-shadow:0 0 0 3px #e7f2e3}
+  .formrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .hint{color:var(--brand);font-size:11.5px;margin-top:4px}
+  .radios{display:flex;flex-direction:column;gap:7px;margin-top:5px}
+  .radios label{display:flex;align-items:center;gap:8px;font-weight:500;margin:0}
+  .radios .rd{width:15px;height:15px;border-radius:99px;border:2px solid #cfd8cc;display:inline-block}
+  .radios label.sel .rd{border-color:var(--brand);background:var(--brand)}
+  .dotc{width:9px;height:9px;border-radius:99px;display:inline-block}
+  .search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:0 12px;height:42px;color:var(--mut);font-size:13px;margin-bottom:14px}
+  .btn{background:var(--brand);color:#fff;border:none;border-radius:9px;padding:11px 15px;font-family:'Inter';font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px}
+  .btn.full{width:100%;justify-content:center;margin-top:16px}
+  .btn.ghost{background:#fff;color:var(--brand);border:1px solid var(--brand)}
+  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:300px;color:var(--mut);text-align:center;padding:24px}
+  .empty .ic{width:50px;height:50px;border-radius:13px;background:#eef6ec;color:var(--brand);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .empty b{color:var(--ink);font-family:'Poppins';font-size:15px}
+  .spin{width:34px;height:34px;border:3px solid #e4ede3;border-top-color:var(--brand);border-radius:99px;animation:sp .8s linear infinite;margin-bottom:12px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .gr{border:1px solid var(--line);border-radius:11px;padding:14px}
+  .gr .hd{display:flex;align-items:center;justify-content:space-between}
+  .gr .save{font-family:'Poppins';font-weight:800;color:var(--brand);font-size:20px}
+  .members{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+  .mem{background:#f3f8f1;border-radius:7px;padding:6px 10px;font-size:11px}
+  .mem b{display:block;font-size:12px}
+  .work{margin-top:12px;border-top:1px dashed var(--line);padding-top:12px}
+  .segbar{display:flex;height:26px;border-radius:7px;overflow:hidden;margin:7px 0 5px}
+  .seg{display:flex;align-items:center;justify-content:center;color:#123;font-size:11px;font-weight:700;font-family:'Poppins'}
+  .muted{color:var(--mut);font-size:11.5px}
+  /* vendor cards */
+  .vcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px;position:relative}
+  .vcard.best{border-color:var(--brand);box-shadow:0 0 0 2px #e7f2e3}
+  .vcard .rb{position:absolute;top:12px;right:14px;color:var(--brand);font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px}
+  .vcard .bx{width:36px;height:36px;border-radius:9px;background:#f0f4ef;color:#6b7d63;display:flex;align-items:center;justify-content:center;margin-bottom:26px}
+  .vcard .nm{font-family:'Poppins';font-weight:700;font-size:14px}
+  .vcard .cat{color:var(--brand);font-size:12px;font-weight:600;margin-top:2px}
+  .vcard .loc{color:var(--mut);font-size:11.5px;margin-top:5px;display:flex;align-items:center;gap:5px}
+  .vcard .rt{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+  .vcard .rt .st{font-weight:700;font-size:13px;color:#e6a417}
+  .vcard .rt .or{color:var(--mut);font-size:11.5px}
+  .vcard .mo{color:var(--mut);font-size:11px;margin-top:4px}
+  .vcard .airec{margin-top:10px;background:#eef6ec;color:var(--brand);border-radius:8px;padding:6px 10px;font-size:11.5px;font-weight:600;text-align:center}
+  /* transaksi list */
+  .txlist{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 4px}
+  .txlist .hdr{font-family:'Poppins';font-weight:600;font-size:14px;padding:10px 14px}
+  .txrow{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 14px;border-top:1px solid var(--line)}
+  .txrow .st{font-size:10.5px;font-weight:700;border-radius:99px;padding:2px 9px;display:inline-block;margin-bottom:5px}
+  .st.aktif{background:#eaf1fc;color:#2f68c4}.st.menunggu{background:#fdf3e0;color:#b9791f}.st.selesai{background:#e9f5ea;color:#2f7d38}
+  .txrow .nm{font-weight:600;font-size:13.5px}
+  .txrow .mt{color:var(--mut);font-size:11.5px;margin-top:2px}
+  .txrow .amt{font-family:'Poppins';font-weight:700;font-size:14px;text-align:right}
+  .txrow .hm{color:var(--brand);font-size:12px;text-align:right;margin-top:3px}
+  /* konsultasi */
+  .chat{max-width:640px;margin:0 auto;text-align:center;padding-top:20px}
+  .chat .bot{width:56px;height:56px;border-radius:14px;background:var(--side);color:var(--brand2);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+  .chips{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+  .chip{border:1px solid var(--line);border-radius:9px;padding:12px;font-size:12px;text-align:left;background:#fff}
+  .disc{color:var(--mut);font-size:11px;margin-top:12px}
+  .toast{position:absolute;right:20px;bottom:20px;background:var(--side);color:#fff;border-radius:11px;padding:12px 16px;display:flex;align-items:center;gap:9px;box-shadow:0 10px 30px rgba(0,0,0,.25);transform:translateY(20px);opacity:0;transition:.35s;z-index:60;font-size:13px}
+  .toast.show{transform:none;opacity:1}
+  .toast .ic{width:24px;height:24px;border-radius:99px;background:var(--brand2);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+  .cursor{position:absolute;width:22px;height:22px;z-index:80;pointer-events:none;left:55%;top:60%;transition:left .8s cubic-bezier(.55,.06,.3,1),top .8s cubic-bezier(.55,.06,.3,1);filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+  .cursor.down{transform:scale(.85)}
+  .rip{position:absolute;width:14px;height:14px;border-radius:99px;background:rgba(73,145,62,.5);z-index:75;pointer-events:none;transform:translate(-50%,-50%);animation:rp .6s ease-out forwards}
+  @keyframes rp{from{opacity:.7;width:8px;height:8px}to{opacity:0;width:60px;height:60px}}
+  svg{stroke-width:2;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .ctrl{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:8px;z-index:90}
+  .ctrl button{background:var(--brand);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-weight:600;font-size:12px;cursor:pointer}
+  .ctrl button.sec{background:#e6efe3;color:#2c5824}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="app">
+    <aside class="side">
+      <div class="brand"><b>Deschain</b></div>
+      <nav class="nav" id="nav">
+        <a data-go="dashboard" class="on"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>Dashboard</a>
+        <a data-go="matching"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><path d="M12 7h3a2 2 0 012 2v5"/></svg></span>Cari Grup AI</a>
+        <a data-go="matching"><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></span>Pengadaan</a>
+        <a data-go="vendor"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 9h16v11H4z"/><path d="M4 9l2-5h12l2 5"/></svg></span>Vendor</a>
+        <a data-go="transaksi"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg></span>Transaksi</a>
+        <a data-go="konsultasi"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 3z"/></svg></span>Konsultasi AI</a>
+        <a data-go="profil"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 14.5-4 16 0"/></svg></span>Profil</a>
+      </nav>
+      <div class="foot">PIDI-DIGDAYA X 2026</div>
+    </aside>
+    <div class="main">
+      <div class="top">
+        <div class="bell"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 004 0"/></svg><span class="b">3</span></div>
+        <div class="user"><span class="av">BS</span>Budi Santoso</div>
+        <div class="btnlk"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M15 4h4v16h-4"/><path d="M10 12H3m0 0l3-3m-3 3l3 3"/></svg>Keluar</div>
+      </div>
+      <div class="content" id="content">
+
+        <!-- DASHBOARD -->
+        <section class="sec on" id="dashboard">
+          <h1>Selamat datang, Budi</h1>
+          <div class="subt">Dashboard pengadaan kolektif Anda · <span class="badgesim">data demo</span></div>
+          <div class="grid4">
+            <div class="kpi"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 7h16v13H4z"/><path d="M4 7l3-3h10l3 3"/></svg></div><div class="lb">Total Pengadaan</div><div class="vl">Rp49 jt</div><div class="sm">Nilai kumulatif</div></div>
+            <div class="kpi"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 18l6-6 4 4 6-8"/></svg></div><div class="lb">Total Penghematan</div><div class="vl g">Rp6 jt</div><div class="sm">16,2% rata-rata (simulasi)</div></div>
+            <div class="kpi"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div><div class="lb">Transaksi Selesai</div><div class="vl">5</div><div class="sm">Semua periode</div></div>
+            <div class="kpi"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 3l2.5 5 5.5.8-4 3.9 1 5.5-5-2.6-5 2.6 1-5.5-4-3.9 5.5-.8z"/></svg></div><div class="lb">Skor Kredit</div><div class="vl g">4,3/5</div><div class="sm">Sangat Baik</div></div>
+          </div>
+          <div class="panel" style="margin-bottom:12px"><h3>Tren Penghematan <span class="badgesim">simulasi</span></h3>
+            <svg viewBox="0 0 600 130" style="width:100%;height:110px;margin-top:8px" preserveAspectRatio="none">
+              <line x1="0" y1="105" x2="600" y2="105" stroke="#e4ede3"/><line x1="0" y1="65" x2="600" y2="65" stroke="#eef3ec"/><line x1="0" y1="25" x2="600" y2="25" stroke="#eef3ec"/>
+              <polyline points="20,85 170,98 320,60 460,42 580,18" fill="none" stroke="#49913E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="20" cy="85" r="4" fill="#49913E"/><circle cx="170" cy="98" r="4" fill="#49913E"/><circle cx="320" cy="60" r="4" fill="#49913E"/><circle cx="460" cy="42" r="4" fill="#49913E"/><circle cx="580" cy="18" r="5" fill="#49913E"/>
+            </svg>
+            <div style="display:flex;justify-content:space-between;color:var(--mut);font-size:10.5px"><span>Minggu 1</span><span>Minggu 2</span><span>Minggu 3</span><span>Minggu 4</span></div>
+          </div>
+          <div class="two">
+            <div class="panel">
+              <h3>Credit Trail <span class="badge">Data Nyata</span></h3>
+              <div class="tl" id="ctList">
+                <div class="tli blue"><div class="dot b"></div><div class="tx">Bergabung Grup — Grup Sembako Aktif Q2<span>28 Mei 2026 · Pontianak</span></div><div class="sv">Hemat Rp324.000 (18%)</div></div>
+                <div class="tli"><div class="dot"></div><div class="tx">Transaksi Selesai — Tepung Terigu 300 kg<span>22 Mei 2026 · Pontianak</span></div><div class="sv">Selesai</div></div>
+                <div class="tli blue"><div class="dot b"></div><div class="tx">Bergabung Grup — Kolektif Minyak Goreng<span>14 Mei 2026 · Pontianak</span></div><div class="sv">Hemat Rp960.000 (15%)</div></div>
+                <div class="tli blue"><div class="dot b"></div><div class="tx">Bergabung Grup — Grup Beras Pontianak Barat<span>6 Mei 2026 · Pontianak</span></div><div class="sv">Hemat Rp1.500.000 (20%)</div></div>
+              </div>
+              <button class="btn ghost" id="btnExport" style="margin-top:12px"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v3h16v-3"/></svg> Export Credit Trail (PDF)</button>
+            </div>
+            <div class="panel">
+              <h3>Aksi Cepat</h3>
+              <div class="qa">
+                <div class="qbtn" id="qMatch"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><path d="M12 7h3a2 2 0 012 2v5"/></svg></div><div><b>Cari Grup Pengadaan</b><span>AI mencocokkan kebutuhan Anda dengan UMKM lain</span></div></div>
+                <div class="qbtn"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/></svg></div><div><b>Buat Permintaan</b><span>Ajukan kebutuhan baru untuk dicocokkan</span></div></div>
+                <div class="qbtn"><div class="ic"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 9h16v11H4z"/><path d="M4 9l2-5h12l2 5"/></svg></div><div><b>Jelajahi Vendor</b><span>Temukan supplier terpercaya di daerah Anda</span></div></div>
+              </div>
+              <div class="tip">Tahukah Anda? UMKM yang bergabung grup pengadaan rata-rata menghemat 8–25% biaya dibanding beli sendiri (hasil simulasi).</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- MATCHING -->
+        <section class="sec" id="matching">
+          <h1>AI Group Matching</h1>
+          <div class="subt">Temukan UMKM lain dengan kebutuhan pengadaan serupa</div>
+          <div class="two">
+            <div class="panel">
+              <h3>Input Kebutuhan Pengadaan</h3>
+              <label>Nama Produk <span class="req">*</span></label>
+              <input id="fProd" value="">
+              <label>Kategori</label>
+              <select><option>Beras &amp; Biji-bijian</option></select>
+              <div class="formrow">
+                <div><label>Kuantitas <span class="req">*</span></label><input id="fQty" value=""></div>
+                <div><label>Satuan</label><select><option>kg</option></select></div>
+              </div>
+              <label>Budget (Rp) <span class="req">*</span></label>
+              <input id="fBudget" value="">
+              <div class="hint" id="budgetHint">Rp 0</div>
+              <label>Kota Pengiriman</label>
+              <input id="fCity" value="">
+              <label>Urgensi</label>
+              <div class="radios">
+                <label id="urgU"><span class="rd"></span><span class="dotc" style="background:#e2584a"></span> Mendesak (kurang 3 hari)</label>
+                <label id="urgNormal"><span class="rd"></span><span class="dotc" style="background:#e6b800"></span> Normal (1–2 minggu)</label>
+                <label id="urgF"><span class="rd"></span><span class="dotc" style="background:#57a83a"></span> Fleksibel (lebih 2 minggu)</label>
+              </div>
+              <button class="btn full" id="btnMatch"><svg width="15" height="15" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg> Cari Grup Sekarang</button>
+            </div>
+            <div class="panel" id="matchOut"></div>
+          </div>
+        </section>
+
+        <!-- VENDOR (grid kartu, gaya asli) -->
+        <section class="sec" id="vendor">
+          <h1>Vendor</h1>
+          <div class="subt">Supplier terpercaya untuk kebutuhan pengadaan Anda</div>
+          <div class="search"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg> Cari vendor, kategori, atau kota…</div>
+          <div class="grid3">
+            <div class="vcard best" id="vendPick">
+              <div class="rb"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg> Terverifikasi</div>
+              <div class="bx"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 9h16v11H4z"/><path d="M4 9l2-5h12l2 5"/></svg></div>
+              <div class="nm">PT Agro Nusantara Mandiri</div><div class="cat">Sembako &amp; Pertanian</div>
+              <div class="loc"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> Pontianak, Kalimantan Barat</div>
+              <div class="rt"><span class="st">★ 4,8 <span class="or">/5</span></span><span class="or">250 pesanan</span></div>
+              <div class="mo">Min. order: 50 unit</div>
+              <div class="airec">✓ Rekomendasi AI untuk Grup Beras Pontianak</div>
+            </div>
+            <div class="vcard">
+              <div class="rb"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg> Terverifikasi</div>
+              <div class="bx"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 9h16v11H4z"/><path d="M4 9l2-5h12l2 5"/></svg></div>
+              <div class="nm">UD Indo Grosir Utama</div><div class="cat">Sembako</div>
+              <div class="loc"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> Pontianak, Kalimantan Barat</div>
+              <div class="rt"><span class="st">★ 4,5 <span class="or">/5</span></span><span class="or">180 pesanan</span></div>
+              <div class="mo">Min. order: 50 unit</div>
+            </div>
+            <div class="vcard">
+              <div class="rb"><svg width="13" height="13" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg> Terverifikasi</div>
+              <div class="bx"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 9h16v11H4z"/><path d="M4 9l2-5h12l2 5"/></svg></div>
+              <div class="nm">CV Kaltim Supply Chain</div><div class="cat">Bahan Bangunan</div>
+              <div class="loc"><svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> Balikpapan, Kalimantan Timur</div>
+              <div class="rt"><span class="st">★ 4,3 <span class="or">/5</span></span><span class="or">120 pesanan</span></div>
+              <div class="mo">Min. order: 50 unit</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TRANSAKSI (riwayat, gaya asli) -->
+        <section class="sec" id="transaksi">
+          <h1>Transaksi</h1>
+          <div class="subt">Riwayat pengadaan kolektif Anda</div>
+          <div class="grid3" style="margin-bottom:14px">
+            <div class="kpi"><div class="lb">Total Transaksi</div><div class="vl" id="txTotal">5</div></div>
+            <div class="kpi"><div class="lb">Total Penghematan <span class="badgesim">simulasi</span></div><div class="vl g" id="txHemat">Rp5.904.000</div></div>
+            <div class="kpi"><div class="lb">Selesai</div><div class="vl g">3</div></div>
+          </div>
+          <div class="txlist">
+            <div class="hdr">Semua Transaksi</div>
+            <div id="txList">
+              <div class="txrow"><div><span class="st aktif">Aktif</span><div class="nm">Grup Elektronik Pontianak</div><div class="mt">Menunggu konfirmasi vendor · 1 Jun 2026</div></div><div><div class="amt">Rp30.000.001</div><div class="hm">Hemat Rp2.400.000 (8%)</div></div></div>
+              <div class="txrow"><div><span class="st menunggu">Menunggu</span><div class="nm">Grup Sembako Aktif Q2</div><div class="mt">Menunggu konfirmasi vendor · 28 Mei 2026</div></div><div><div class="amt">Rp1.800.000</div><div class="hm">Hemat Rp324.000 (18%)</div></div></div>
+              <div class="txrow"><div><span class="st selesai">Selesai</span><div class="nm">Grup Tepung Bakeri Kalimantan</div><div class="mt">PT Agro Nusantara Mandiri · 22 Mei 2026</div></div><div><div class="amt">Rp3.600.000</div><div class="hm">Hemat Rp720.000 (20%)</div></div></div>
+              <div class="txrow"><div><span class="st selesai">Selesai</span><div class="nm">Kolektif Minyak Goreng Pedagang Pasar</div><div class="mt">UD Indo Grosir Utama · 14 Mei 2026</div></div><div><div class="amt">Rp6.400.000</div><div class="hm">Hemat Rp960.000 (15%)</div></div></div>
+              <div class="txrow"><div><span class="st selesai">Selesai</span><div class="nm">Grup Beras Pontianak Barat</div><div class="mt">PT Agro Nusantara Mandiri · 6 Mei 2026</div></div><div><div class="amt">Rp7.500.000</div><div class="hm">Hemat Rp1.500.000 (20%)</div></div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- KONSULTASI -->
+        <section class="sec" id="konsultasi">
+          <h1>Konsultasi AI</h1>
+          <div class="subt">Tanya seputar UMKM, pengadaan, KUR, dan regulasi</div>
+          <div class="panel">
+            <div class="chat">
+              <div class="bot"><svg width="28" height="28" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 4v3M9 12h.01M15 12h.01"/></svg></div>
+              <b style="font-family:'Poppins';font-size:16px">Halo! Saya siap membantu</b>
+              <div class="muted" style="margin-top:4px">Tanya apa saja tentang bisnis UMKM Anda</div>
+              <div class="chips">
+                <div class="chip">Bagaimana cara mengajukan KUR untuk UMKM?</div>
+                <div class="chip">Cara bergabung grup pengadaan di Deschain?</div>
+                <div class="chip">Tips negosiasi harga dengan vendor?</div>
+                <div class="chip">Apa itu credit trail dan manfaatnya?</div>
+              </div>
+              <div class="disc">Jawaban berdasarkan knowledge base Deschain — bukan nasihat hukum atau keuangan resmi.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PROFIL -->
+        <section class="sec" id="profil">
+          <h1>Profil UMKM</h1>
+          <div class="subt">Data usaha dan verifikasi</div>
+          <div class="panel" style="max-width:520px">
+            <div style="display:flex;align-items:center;gap:12px"><span class="av" style="width:48px;height:48px;font-size:16px;background:var(--brand);color:#fff;border-radius:99px;display:flex;align-items:center;justify-content:center;font-weight:700">BS</span><div><div style="font-weight:600">Warung Budi Santoso</div><div class="muted">Pontianak · Ritel/Sembako</div></div></div>
+            <div class="tl">
+              <div class="tli"><div class="dot"></div><div class="tx">Status verifikasi<span>NIB terverifikasi</span></div><div class="sv">Aktif</div></div>
+              <div class="tli"><div class="dot"></div><div class="tx">Skor kredit<span>dari riwayat transaksi</span></div><div class="sv">4,3 / 5</div></div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"><div class="ic"><svg width="15" height="15" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div><span id="toastMsg">Transaksi tercatat</span></div>
+  <img class="cursor" id="cursor" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24'><path d='M4 2l6 16 2.5-6.5L19 9z' fill='%23ffffff' stroke='%230f1f0d' stroke-width='1.5' stroke-linejoin='round'/></svg>" alt="">
+  <div class="ctrl"><button class="sec" id="replay">↻ Ulangi</button></div>
+</div>
+
+<script>
+const secs=[...document.querySelectorAll('.sec')];
+const navs=[...document.querySelectorAll('#nav a')];
+const cursor=document.getElementById('cursor');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const emptyMatch='<div class="empty"><div class="ic"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><path d="M12 7h3a2 2 0 012 2v5"/></svg></div><b>AI Siap Mencocokkan</b><p style="margin-top:6px;max-width:240px">Isi form di kiri, lalu klik Cari Grup Sekarang untuk melihat rekomendasi grup terbaik.</p></div>';
+const ct1=document.getElementById('ctList').innerHTML, tx1=document.getElementById('txList').innerHTML;
+
+function go(id){secs.forEach(s=>s.classList.toggle('on',s.id===id));navs.forEach(a=>a.classList.toggle('on',a.dataset.go===id));document.getElementById('content').scrollTop=0;}
+function toast(msg){document.getElementById('toastMsg').textContent=msg;const t=document.getElementById('toast');t.classList.add('show');clearTimeout(window._t);window._t=setTimeout(()=>t.classList.remove('show'),2600);}
+async function moveTo(el){const s=document.getElementById('stage').getBoundingClientRect(),r=el.getBoundingClientRect();cursor.style.left=(r.left-s.left+r.width/2)+'px';cursor.style.top=(r.top-s.top+r.height/2)+'px';await sleep(850);}
+function ripple(el){const st=document.getElementById('stage'),s=st.getBoundingClientRect(),r=el.getBoundingClientRect();const d=document.createElement('div');d.className='rip';d.style.left=(r.left-s.left+r.width/2)+'px';d.style.top=(r.top-s.top+r.height/2)+'px';st.appendChild(d);setTimeout(()=>d.remove(),600);}
+async function click(el){el.scrollIntoView({block:'center'});await sleep(340);await moveTo(el);cursor.classList.add('down');ripple(el);await sleep(160);cursor.classList.remove('down');await sleep(240);}
+async function type(el,text,sp=55){el.scrollIntoView({block:'center'});await sleep(300);await moveTo(el);el.classList.add('foc');el.value='';for(const ch of text){el.value+=ch;if(el.id==='fBudget')updBudget();await sleep(sp);}el.classList.remove('foc');await sleep(200);}
+function updBudget(){const v=(document.getElementById('fBudget').value||'').replace(/\D/g,'');document.getElementById('budgetHint').textContent='Rp '+(v?parseInt(v).toLocaleString('id-ID'):'0');}
+
+function showLoading(){document.getElementById('matchOut').innerHTML='<div class="empty"><div class="spin"></div><b>AI sedang mencocokkan…</b><p style="margin-top:6px" class="muted">Menghitung skor kesamaan dan menyusun grup optimal</p></div>';}
+function showGroup(){document.getElementById('matchOut').innerHTML=`
+    <h3>Grup Ditemukan <span class="badgesim">hasil simulasi</span></h3>
+    <div class="gr">
+      <div class="hd"><div><b style="font-family:'Poppins'">Grup Beras Pontianak</b><div class="muted">4 UMKM · 210 kg · minggu ini</div></div><div style="text-align:right"><div class="save">18%</div><div class="muted">estimasi hemat</div></div></div>
+      <div class="members"><div class="mem"><b>Warung Budi</b>50 kg</div><div class="mem"><b>Toko Berkah</b>70 kg</div><div class="mem"><b>Warung Siti</b>50 kg</div><div class="mem"><b>Kop. Nelayan</b>40 kg</div></div>
+      <div class="work">
+        <div style="font-weight:600;font-size:12.5px">Cara kerja (transparan &amp; dapat diaudit)</div>
+        <div class="segbar"><div class="seg" style="width:40%;background:#6DB863">Kategori 40%</div><div class="seg" style="width:30%;background:#8fc985">Kota 30%</div><div class="seg" style="width:20%;background:#b3ddaa;color:#123">Budget 20%</div><div class="seg" style="width:10%;background:#d7efd1;color:#2c5824">Urg</div></div>
+        <div class="muted">Lalu <b>0/1 Knapsack Dynamic Programming</b> memilih 4 dari 7 kandidat untuk penghematan maksimum.</div>
+      </div>
+      <button class="btn full" id="btnToVendor" style="margin-top:12px">Lihat Vendor Terverifikasi ›</button>
+    </div>`;}
+function addTx(){
+  const row='<div class="txrow" style="background:#f2f9f0"><div><span class="st menunggu">Menunggu</span><div class="nm">Grup Beras Pontianak</div><div class="mt">PT Agro Nusantara Mandiri · Hari ini</div></div><div><div class="amt">Rp2.478.000</div><div class="hm">Hemat Rp135.000 (18%)</div></div></div>';
+  document.getElementById('txList').insertAdjacentHTML('afterbegin',row);
+  document.getElementById('txTotal').textContent='6';
+  document.getElementById('txHemat').textContent='Rp6.039.000';
+  const c='<div class="tli blue" style="outline:2px solid var(--brand2)"><div class="dot b"></div><div class="tx">Bergabung Grup — Grup Beras Pontianak<span>Hari ini · Pontianak</span></div><div class="sv">Hemat Rp135.000 (18%)</div></div>';
+  document.getElementById('ctList').insertAdjacentHTML('afterbegin',c);
+}
+
+let running=false;
+async function runDemo(){
+  if(running)return;running=true;
+  go('dashboard');
+  document.getElementById('matchOut').innerHTML=emptyMatch;
+  document.getElementById('ctList').innerHTML=ct1;
+  document.getElementById('txList').innerHTML=tx1;
+  document.getElementById('txTotal').textContent='5';document.getElementById('txHemat').textContent='Rp5.904.000';
+  ['fProd','fQty','fBudget','fCity'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('budgetHint').textContent='Rp 0';
+  document.querySelectorAll('.radios label').forEach(l=>l.classList.remove('sel'));
+  cursor.style.left='55%';cursor.style.top='60%';
+  await sleep(1500);
+
+  await click(document.getElementById('qMatch')); go('matching'); await sleep(700);
+  await type(document.getElementById('fProd'),'Beras Premium');
+  await type(document.getElementById('fQty'),'50',90);
+  await type(document.getElementById('fBudget'),'3000000',55);
+  await type(document.getElementById('fCity'),'Pontianak');
+  await click(document.getElementById('urgNormal')); document.getElementById('urgNormal').classList.add('sel'); await sleep(300);
+  await click(document.getElementById('btnMatch')); showLoading(); toast('Memproses dengan AI'); await sleep(1600);
+  showGroup(); toast('Grup pembelian terbentuk'); await sleep(2800);
+  await click(document.getElementById('btnToVendor')); go('vendor'); await sleep(900);
+  await click(document.getElementById('vendPick')); toast('Bergabung grup · menunggu konfirmasi vendor'); await sleep(900);
+  go('transaksi'); addTx(); await sleep(2600);
+  go('dashboard'); await sleep(900);
+  await click(document.getElementById('btnExport')); toast('Credit Trail diekspor sebagai PDF'); await sleep(2400);
+  running=false; await sleep(1400); runDemo();
+}
+document.getElementById('replay').onclick=()=>{running=false;runDemo();};
+window.addEventListener('load',()=>setTimeout(runDemo,900));
+</script>
+<script>if(location.search.indexOf("clean")>-1){var _c=document.querySelector(".ctrl");if(_c)_c.style.display="none";}</script>
+</body>
+</html>
