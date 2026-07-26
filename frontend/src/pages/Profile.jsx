@@ -2,10 +2,10 @@ import React, { useState } from 'react'
 import { DashboardLayout } from '../components/layouts'
 import { useUIStore, useAuthStore } from '../stores'
 import { ProtectedRoute } from '../components/common/ProtectedRoute'
-import { authAPI } from '../api/endpoints'
+import { authAPI, vendorAPI } from '../api/endpoints'
 import {
   Menu, Mail, Phone, User, Shield, CheckCircle,
-  Pencil, X, Save, Lock, Eye, EyeOff, CheckCircle2,
+  Pencil, X, Save, Lock, Eye, EyeOff, CheckCircle2, Store,
 } from 'lucide-react'
 
 const Profile = () => {
@@ -28,6 +28,46 @@ const Profile = () => {
   const [pwSaving, setPwSaving] = useState(false)
   const [pwError, setPwError] = useState('')
   const [pwSuccess, setPwSuccess] = useState(false)
+
+  // Vendor profile state (only relevant for vendor users)
+  const [vendorProfile, setVendorProfile] = useState(null)
+  const [vendorEditMode, setVendorEditMode] = useState(false)
+  const [vendorForm, setVendorForm] = useState({})
+  const [vendorSaving, setVendorSaving] = useState(false)
+  const [vendorMsg, setVendorMsg] = useState('')
+
+  React.useEffect(() => {
+    if (user?.user_type !== 'vendor') return
+    vendorAPI.getMe()
+      .then(res => {
+        if (res.success) {
+          setVendorProfile(res.data)
+          if (!res.data) setVendorEditMode(true)
+        }
+      })
+      .catch(() => {})
+  }, [user])
+
+  const handleVendorSave = async () => {
+    if (!vendorForm.vendor_name?.trim()) {
+      setVendorMsg('Nama vendor wajib diisi')
+      return
+    }
+    setVendorSaving(true)
+    setVendorMsg('')
+    try {
+      const res = await vendorAPI.setup(vendorForm)
+      if (res.success) {
+        setVendorProfile(res.data)
+        setVendorEditMode(false)
+        setVendorMsg('Profil vendor berhasil disimpan')
+      }
+    } catch (e) {
+      setVendorMsg(e?.detail || 'Gagal menyimpan profil vendor')
+    } finally {
+      setVendorSaving(false)
+    }
+  }
 
   const handleEditOpen = () => {
     setForm({ first_name: user?.first_name || '', last_name: user?.last_name || '', phone: user?.phone || '' })
@@ -298,6 +338,114 @@ const Profile = () => {
               )}
             </div>
           </div>
+
+          {/* Vendor profile section */}
+          {user?.user_type === 'vendor' && (
+            <div className="lg:col-span-3 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <Store size={15} className="text-navy-900" />
+                  <h3 className="text-sm font-semibold text-navy-900">
+                    {vendorProfile ? 'Profil Vendor' : 'Setup Profil Vendor'}
+                  </h3>
+                  {!vendorProfile && (
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Wajib Dilengkapi</span>
+                  )}
+                </div>
+                {vendorProfile && !vendorEditMode && (
+                  <button
+                    onClick={() => { setVendorForm(vendorProfile); setVendorEditMode(true); setVendorMsg('') }}
+                    className="flex items-center gap-1.5 text-xs font-medium text-gold-600 hover:text-gold-700 bg-gold-50 hover:bg-gold-100 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    <Pencil size={13} /> Edit
+                  </button>
+                )}
+              </div>
+
+              {!vendorEditMode && vendorProfile ? (
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                  {[
+                    ['Nama Vendor', vendorProfile.vendor_name],
+                    ['Kategori', vendorProfile.business_category],
+                    ['Kota', vendorProfile.city],
+                    ['Provinsi', vendorProfile.province],
+                    ['Kontak', vendorProfile.primary_contact_person],
+                    ['MOQ', vendorProfile.min_order_quantity ? `${vendorProfile.min_order_quantity} unit` : '—'],
+                  ].map(([label, val]) => (
+                    <div key={label}>
+                      <div className="text-xs text-gray-400 mb-0.5">{label}</div>
+                      <div className="font-medium text-navy-900">{val || '—'}</div>
+                    </div>
+                  ))}
+                  {vendorProfile.description && (
+                    <div className="col-span-2 lg:col-span-3">
+                      <div className="text-xs text-gray-400 mb-0.5">Deskripsi</div>
+                      <div className="text-navy-900">{vendorProfile.description}</div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {[
+                    { key: 'vendor_name', label: 'Nama Vendor / Toko *', placeholder: 'CV Sumber Makmur' },
+                    { key: 'business_category', label: 'Kategori Bisnis', placeholder: 'Sembako, Bahan Makanan' },
+                    { key: 'city', label: 'Kota', placeholder: 'Pontianak' },
+                    { key: 'province', label: 'Provinsi', placeholder: 'Kalimantan Barat' },
+                    { key: 'primary_contact_person', label: 'Nama Kontak', placeholder: 'Budi Santoso' },
+                    { key: 'primary_phone', label: 'Nomor Kontak', placeholder: '081234567890' },
+                    { key: 'min_order_quantity', label: 'MOQ (unit)', placeholder: '50', type: 'number' },
+                    { key: 'average_lead_time_days', label: 'Lead Time (hari)', placeholder: '3', type: 'number' },
+                  ].map(({ key, label, placeholder, type }) => (
+                    <div key={key}>
+                      <label className="text-xs text-gray-500 mb-1 block">{label}</label>
+                      <input
+                        type={type || 'text'}
+                        placeholder={placeholder}
+                        value={vendorForm[key] || ''}
+                        onChange={e => setVendorForm(f => ({ ...f, [key]: type === 'number' ? (e.target.value ? Number(e.target.value) : '') : e.target.value }))}
+                        className={inputClass}
+                      />
+                    </div>
+                  ))}
+                  <div className="lg:col-span-2">
+                    <label className="text-xs text-gray-500 mb-1 block">Deskripsi Usaha</label>
+                    <textarea
+                      rows={3}
+                      placeholder="Jelaskan produk dan layanan yang Anda tawarkan..."
+                      value={vendorForm.description || ''}
+                      onChange={e => setVendorForm(f => ({ ...f, description: e.target.value }))}
+                      className={inputClass + ' resize-none'}
+                    />
+                  </div>
+
+                  {vendorMsg && (
+                    <div className={`lg:col-span-2 text-xs px-3 py-2 rounded-lg border ${vendorMsg.includes('berhasil') ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                      {vendorMsg}
+                    </div>
+                  )}
+
+                  <div className="lg:col-span-2 flex gap-2">
+                    <button
+                      onClick={handleVendorSave}
+                      disabled={vendorSaving}
+                      className="flex items-center gap-1.5 bg-navy-900 text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-navy-800 disabled:opacity-50 transition-colors"
+                    >
+                      <Save size={13} />
+                      {vendorSaving ? 'Menyimpan...' : 'Simpan Profil Vendor'}
+                    </button>
+                    {vendorProfile && (
+                      <button
+                        onClick={() => setVendorEditMode(false)}
+                        className="flex items-center gap-1.5 border border-gray-200 text-gray-500 text-xs font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <X size={13} /> Batal
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </DashboardLayout>
     </ProtectedRoute>

@@ -64,8 +64,10 @@ async def get_my_transactions(
 
         result.append({
             "id": str(m.id),
+            "group_id": str(m.group_id) if m.group_id else None,
             "group_name": group.group_name if group else "Grup Pengadaan",
             "group_status": group.status if group else "forming",
+            "membership_status": m.status,
             "vendor": vendor_by_group.get(m.group_id, "Menunggu konfirmasi vendor"),
             "amount": m.individual_budget,
             "savings": round(savings_amt) if m.savings_percentage else 0,

@@ -131,8 +131,8 @@ def _ollama_answer(query: str, chunks: list[dict]) -> str:
             if len(content) < 30:
                 return None
             return content
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("ollama_failed", error=str(exc))
     return None
 
 
@@ -157,7 +157,8 @@ def _groq_answer(query: str, chunks: list[dict]) -> str:
             temperature=0.7,
         )
         return response.choices[0].message.content
-    except Exception:
+    except Exception as exc:
+        logger.debug("groq_failed", error=str(exc))
         return None
 
 
@@ -183,7 +184,8 @@ def _haiku_answer(query: str, chunks: list[dict]) -> str:
         )
         return response.content[0].text
 
-    except Exception:
+    except Exception as exc:
+        logger.debug("haiku_failed", error=str(exc))
         return None
 
 

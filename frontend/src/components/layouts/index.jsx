@@ -16,19 +16,55 @@ const menuItems = [
   { icon: User,             label: 'Profil',         path: '/profile',              roles: ['umkm', 'vendor'] },
 ]
 
+const SSE_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
+
 export const Navbar = () => {
   const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
-  const { notifications, unreadCount, setNotifications } = useNotificationStore()
+  const { user, logout, token } = useAuthStore()
+  const { notifications, unreadCount, setNotifications, setUnreadCount, markAsRead } = useNotificationStore()
   const [showNotif, setShowNotif] = React.useState(false)
 
   React.useEffect(() => {
-    if (user) {
-      notificationAPI.list()
-        .then(res => { if (res.success) setNotifications(res.data) })
-        .catch(() => {})
+    if (!user || !token) return
+
+    let es = null
+    let retryTimeout = null
+    let retryDelay = 5000
+
+    const connect = () => {
+      es = new EventSource(
+        `${SSE_BASE}/notification/stream?token=${encodeURIComponent(token)}`
+      )
+
+      es.onopen = () => { retryDelay = 5000 }
+
+      es.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data)
+          if (d.error) return
+          if (Array.isArray(d.notifications)) setNotifications(d.notifications)
+          if (typeof d.unread_count === 'number') setUnreadCount(d.unread_count)
+        } catch {}
+      }
+
+      es.onerror = () => {
+        es.close()
+        notificationAPI.list()
+          .then(res => { if (res.success) setNotifications(res.data) })
+          .catch(() => {})
+        retryTimeout = setTimeout(() => {
+          retryDelay = Math.min(retryDelay * 2, 60_000)
+          connect()
+        }, retryDelay)
+      }
     }
-  }, [user])
+
+    connect()
+    return () => {
+      es?.close()
+      clearTimeout(retryTimeout)
+    }
+  }, [user, token])
 
   React.useEffect(() => {
     if (!showNotif) return
@@ -65,8 +101,19 @@ export const Navbar = () => {
 
               {showNotif && (
                 <div className="absolute right-0 top-10 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-gray-100">
+                  <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                     <span className="text-sm font-semibold text-navy-900">Notifikasi</span>
+                    {unreadCount > 0 && (
+                      <button
+                        className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
+                        onClick={() => {
+                          notificationAPI.markAllRead().catch(() => {})
+                          setNotifications(notifications.map(n => ({ ...n, is_read: true })))
+                        }}
+                      >
+                        Tandai semua dibaca
+                      </button>
+                    )}
                   </div>
                   <div className="max-h-64 overflow-y-auto divide-y divide-gray-50">
                     {notifications.length === 0 ? (
@@ -75,7 +122,16 @@ export const Navbar = () => {
                       </div>
                     ) : (
                       notifications.slice(0, 5).map(n => (
-                        <div key={n.id} className={`px-4 py-3 text-sm ${!n.is_read ? 'bg-blue-50' : ''}`}>
+                        <div
+                          key={n.id}
+                          className={`px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 transition-colors ${!n.is_read ? 'bg-blue-50' : ''}`}
+                          onClick={() => {
+                            if (!n.is_read) {
+                              notificationAPI.markAsRead(n.id).catch(() => {})
+                              markAsRead(n.id)
+                            }
+                          }}
+                        >
                           <div className="font-medium text-navy-900">{n.title}</div>
                           <div className="text-gray-500 text-xs mt-0.5 line-clamp-2">{n.message}</div>
                         </div>

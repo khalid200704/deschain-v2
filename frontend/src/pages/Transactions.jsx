@@ -2,8 +2,8 @@ import React from 'react'
 import { DashboardLayout } from '../components/layouts'
 import { useUIStore } from '../stores'
 import { ProtectedRoute } from '../components/common/ProtectedRoute'
-import { Menu, CheckCircle, Clock, TrendingDown } from 'lucide-react'
-import { transactionAPI } from '../api/endpoints'
+import { Menu, CheckCircle, Clock, TrendingDown, ThumbsUp, PackageCheck } from 'lucide-react'
+import { transactionAPI, matchingAPI } from '../api/endpoints'
 import { Spinner } from '../components/common'
 
 const fmt = (n) => (n || 0).toLocaleString('id-ID')
@@ -31,18 +31,51 @@ const Transactions = () => {
   const [data, setData] = React.useState([])
   const [summary, setSummary] = React.useState({ total: 0, total_savings: 0, completed: 0 })
   const [loading, setLoading] = React.useState(true)
+  const [actionLoading, setActionLoading] = React.useState({})
+  const [actionMsg, setActionMsg] = React.useState({})
+
+  const reload = () => {
+    transactionAPI.getMy()
+      .then((res) => { if (res.success) { setData(res.data); setSummary(res.summary) } })
+      .catch(() => {})
+  }
 
   React.useEffect(() => {
     transactionAPI.getMy()
       .then((res) => {
-        if (res.success) {
-          setData(res.data)
-          setSummary(res.summary)
-        }
+        if (res.success) { setData(res.data); setSummary(res.summary) }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
+
+  const handleConfirm = async (tx) => {
+    if (!tx.group_id) return
+    setActionLoading(prev => ({ ...prev, [tx.id]: 'confirm' }))
+    try {
+      const res = await matchingAPI.confirmGroup(tx.group_id)
+      setActionMsg(prev => ({ ...prev, [tx.id]: res.message || 'Dikonfirmasi' }))
+      reload()
+    } catch (e) {
+      setActionMsg(prev => ({ ...prev, [tx.id]: e?.detail || 'Gagal mengkonfirmasi' }))
+    } finally {
+      setActionLoading(prev => ({ ...prev, [tx.id]: null }))
+    }
+  }
+
+  const handleComplete = async (tx) => {
+    if (!tx.group_id) return
+    setActionLoading(prev => ({ ...prev, [tx.id]: 'complete' }))
+    try {
+      const res = await matchingAPI.completeGroup(tx.group_id)
+      setActionMsg(prev => ({ ...prev, [tx.id]: res.message || 'Selesai' }))
+      reload()
+    } catch (e) {
+      setActionMsg(prev => ({ ...prev, [tx.id]: e?.detail || 'Gagal menyelesaikan' }))
+    } finally {
+      setActionLoading(prev => ({ ...prev, [tx.id]: null }))
+    }
+  }
 
   const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
@@ -99,6 +132,31 @@ const Transactions = () => {
                       </div>
                       <div className="font-medium text-navy-900 text-sm truncate">{tx.group_name}</div>
                       <div className="text-xs text-gray-400 mt-0.5">{tx.vendor} · {fmtDate(tx.date)}</div>
+                      {actionMsg[tx.id] && (
+                        <div className="text-xs text-green-600 mt-1">{actionMsg[tx.id]}</div>
+                      )}
+                      <div className="flex gap-2 mt-2">
+                        {tx.membership_status === 'pending' && tx.group_status !== 'completed' && (
+                          <button
+                            onClick={() => handleConfirm(tx)}
+                            disabled={!!actionLoading[tx.id]}
+                            className="inline-flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50"
+                          >
+                            <ThumbsUp size={11} />
+                            {actionLoading[tx.id] === 'confirm' ? 'Memproses...' : 'Konfirmasi Saya Ikut'}
+                          </button>
+                        )}
+                        {tx.membership_status === 'confirmed' && tx.group_status !== 'completed' && (
+                          <button
+                            onClick={() => handleComplete(tx)}
+                            disabled={!!actionLoading[tx.id]}
+                            className="inline-flex items-center gap-1.5 text-xs bg-green-50 text-green-700 hover:bg-green-100 px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50"
+                          >
+                            <PackageCheck size={11} />
+                            {actionLoading[tx.id] === 'complete' ? 'Memproses...' : 'Barang Diterima'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <div className="font-semibold text-navy-900 text-sm">Rp {fmt(tx.amount)}</div>

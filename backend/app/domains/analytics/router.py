@@ -20,6 +20,19 @@ logger = structlog.get_logger()
 router = APIRouter()
 
 
+def _calc_credit_score(completed: int, avg_savings_pct: float, total_value: float) -> float:
+    """Hitung skor kredit dari data transaksi nyata (base 3.0, cap 5.0)."""
+    score = 3.0
+    if completed >= 1: score += 0.3
+    if completed >= 3: score += 0.2
+    if completed >= 7: score += 0.3
+    if avg_savings_pct >= 15: score += 0.2
+    if avg_savings_pct >= 20: score += 0.2
+    if total_value >= 10_000_000: score += 0.1
+    if total_value >= 50_000_000: score += 0.2
+    return round(min(5.0, max(1.0, score)), 1)
+
+
 def _demo_dashboard():
     """Realistic demo data for new/empty accounts"""
     return {
@@ -125,7 +138,6 @@ async def get_dashboard(
     )
 
     total_tx = len(memberships)
-    credit_score = umkm.credit_score or 0
 
     # Weekly savings — last 4 weeks
     weekly_savings = []
@@ -145,6 +157,9 @@ async def get_dashboard(
     if total_procurement == 0:
         return {"success": True, "data": _demo_dashboard()}
 
+    completed_count = sum(1 for m in memberships if m.status == "completed")
+    credit_score = _calc_credit_score(completed_count, avg_savings_pct, total_procurement)
+
     return {
         "success": True,
         "data": {
@@ -152,7 +167,7 @@ async def get_dashboard(
             "total_savings": total_savings,
             "average_savings_percentage": round(avg_savings_pct, 1),
             "total_transactions": total_tx,
-            "credit_score": round(credit_score, 1),
+            "credit_score": credit_score,
             "weekly_savings": weekly_savings,
             "is_demo": False,
         },
@@ -287,15 +302,22 @@ async def export_credit_trail(
             })
             total_savings += savings
 
+    # Hitung credit score dari data nyata (sama dengan dashboard)
+    if umkm and memberships:
+        avg_sav = sum(m.savings_percentage or 0 for m in memberships) / len(memberships)
+        computed_score = _calc_credit_score(len(memberships), avg_sav, total_value)
+    else:
+        computed_score = 3.0
+
     export = {
         "dokumen": "Credit Trail Deschain",
         "versi_pojk": "POJK No. 29/2024 (ICS — Innovative Credit Scoring)",
         "platform": "Deschain — Platform Pengadaan Kolektif AI untuk UMKM",
         "pemilik": {
-            "nama": f"{umkm.owner_name}" if umkm else current_user.get("email"),
+            "nama": umkm.owner_name if umkm else current_user.get("email"),
             "usaha": umkm.business_name if umkm else "-",
             "kota": umkm.city if umkm else "-",
-            "credit_score": umkm.credit_score if umkm else 0,
+            "credit_score": computed_score,
         },
         "ringkasan": {
             "total_transaksi": len(trail_data),
@@ -396,6 +418,18 @@ async def get_forecast(
     umkm = db.query(UMKM).filter(UMKM.user_id == current_user["user_id"]).first()
     if not umkm:
         return {"success": True, "data": _demo_forecast(product_category, horizon_weeks)}
+
+    # Auto-detect kategori terpopuler jika tidak dispesifikasikan
+    if not product_category:
+        most_common = (
+            db.query(ProcurementRequest.product_category, func.count().label("cnt"))
+            .filter(ProcurementRequest.umkm_id == umkm.id)
+            .group_by(ProcurementRequest.product_category)
+            .order_by(func.count().desc())
+            .first()
+        )
+        if most_common and most_common.product_category:
+            product_category = most_common.product_category
 
     q = db.query(ProcurementRequest).filter(ProcurementRequest.umkm_id == umkm.id)
     if product_category:

@@ -1,7 +1,7 @@
 """
 Vendor domain router
 """
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -27,6 +27,69 @@ def _vendor_dict(v: Vendor, user: User = None) -> dict:
         "primary_contact_person": v.primary_contact_person,
         "description": v.description,
     }
+
+
+@router.get("/me")
+async def get_my_vendor_profile(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Ambil profil vendor milik user yang sedang login."""
+    v = db.query(Vendor).filter(Vendor.user_id == current_user["user_id"]).first()
+    if not v:
+        return {"success": True, "data": None}
+    return {"success": True, "data": _vendor_dict(v)}
+
+
+@router.post("/setup")
+async def setup_vendor_profile(
+    body: dict,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Buat atau perbarui profil vendor untuk user yang sedang login."""
+    if current_user.get("user_type") != "vendor":
+        raise HTTPException(status_code=403, detail="Hanya akun vendor yang dapat mengatur profil vendor")
+
+    vendor_name = (body.get("vendor_name") or "").strip()
+    if not vendor_name:
+        raise HTTPException(status_code=400, detail="Nama vendor wajib diisi")
+
+    v = db.query(Vendor).filter(Vendor.user_id == current_user["user_id"]).first()
+    if v:
+        # Update
+        for field in ("vendor_name", "business_category", "city", "province",
+                      "address", "description", "primary_contact_person",
+                      "primary_phone", "min_order_quantity", "average_lead_time_days"):
+            if body.get(field) is not None:
+                setattr(v, field, body[field])
+        if body.get("product_categories"):
+            v.product_categories = body["product_categories"]
+        db.commit()
+        db.refresh(v)
+        return {"success": True, "message": "Profil vendor diperbarui", "data": _vendor_dict(v)}
+    else:
+        # Create
+        v = Vendor(
+            user_id=current_user["user_id"],
+            vendor_name=vendor_name,
+            business_category=body.get("business_category", ""),
+            city=body.get("city", ""),
+            province=body.get("province", ""),
+            address=body.get("address", ""),
+            description=body.get("description", ""),
+            primary_contact_person=body.get("primary_contact_person", ""),
+            primary_phone=body.get("primary_phone", ""),
+            min_order_quantity=body.get("min_order_quantity"),
+            average_lead_time_days=body.get("average_lead_time_days"),
+            product_categories=body.get("product_categories", []),
+            is_active=True,
+            verification_status="pending",
+        )
+        db.add(v)
+        db.commit()
+        db.refresh(v)
+        return {"success": True, "message": "Profil vendor berhasil dibuat", "data": _vendor_dict(v)}
 
 
 @router.get("/")
@@ -66,7 +129,7 @@ async def get_vendor(
     import uuid
     try:
         v = db.query(Vendor).filter(Vendor.id == uuid.UUID(vendor_id)).first()
-    except Exception:
+    except ValueError:
         v = None
 
     if not v:

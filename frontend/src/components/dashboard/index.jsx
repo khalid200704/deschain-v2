@@ -222,17 +222,32 @@ export const CreditTrail = () => {
 export const ForecastWidget = () => {
   const [data, setData] = React.useState(null)
   const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState('')
 
   React.useEffect(() => {
     analyticsAPI.getForecast(null, 4)
       .then((res) => { if (res.success) setData(res.data) })
-      .catch(() => {})
+      .catch(() => setError('Gagal memuat prediksi demand.'))
       .finally(() => setLoading(false))
   }, [])
 
   if (loading) return (
     <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex justify-center py-12">
       <Spinner />
+    </div>
+  )
+  if (error) return (
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+      <div className="flex items-center gap-2 text-red-500 text-sm">
+        <BarChart2 size={16} />
+        <span>{error}</span>
+      </div>
+      <button
+        onClick={() => { setError(''); setLoading(true); analyticsAPI.getForecast(null, 4).then(res => { if (res.success) setData(res.data) }).catch(() => setError('Gagal memuat prediksi demand.')).finally(() => setLoading(false)) }}
+        className="mt-2 text-xs text-blue-600 hover:underline"
+      >
+        Coba lagi
+      </button>
     </div>
   )
   if (!data) return null

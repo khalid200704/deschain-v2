@@ -19,6 +19,8 @@ export const procurementAPI = {
 export const vendorAPI = {
   list: (params = {}) => apiClient.get('/vendors/', { params }),
   getDetails: (vendorId) => apiClient.get(`/vendors/${vendorId}`),
+  getMe: () => apiClient.get('/vendors/me'),
+  setup: (data) => apiClient.post('/vendors/setup', data),
 }
 
 // Matching APIs
@@ -26,6 +28,8 @@ export const matchingAPI = {
   match: (data) => apiClient.post('/matching/groups/match', data),
   joinGroup: (data) => apiClient.post('/matching/groups/join', data),
   batchOptimize: (data) => apiClient.post('/matching/batch-optimize', data),
+  confirmGroup: (groupId) => apiClient.post(`/matching/groups/${groupId}/confirm`),
+  completeGroup: (groupId) => apiClient.post(`/matching/groups/${groupId}/complete`),
 }
 
 // Transaction APIs

@@ -6,21 +6,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 import structlog
 
 from app.config import get_settings
 from app.database import engine, Base
+from app.limiter import limiter
 from app.utils.logging_config import setup_logging
 
 setup_logging()
 logger = structlog.get_logger()
 settings = get_settings()
-
-# Rate limiter
-limiter = Limiter(key_func=get_remote_address)
 
 
 @asynccontextmanager
@@ -31,12 +28,13 @@ async def lifespan(app: FastAPI):
     logger.info("application_shutdown")
 
 
+_is_prod = settings.ENVIRONMENT == "production"
 app = FastAPI(
     title=settings.APP_NAME,
     description="Platform pengadaan kolektif bertenaga AI untuk UMKM & koperasi Indonesia",
     version=settings.APP_VERSION,
-    docs_url=settings.API_DOCS_URL,
-    openapi_url=settings.API_OPENAPI_URL,
+    docs_url=None if _is_prod else settings.API_DOCS_URL,
+    openapi_url=None if _is_prod else settings.API_OPENAPI_URL,
     lifespan=lifespan,
 )
 
@@ -56,7 +54,12 @@ app.add_middleware(
 # Trusted hosts
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.deschain.id", "*.vercel.app", "*.hf.space", "*.huggingface.co"],
+    allowed_hosts=[
+        "localhost", "127.0.0.1",
+        "deschain.id", "www.deschain.id",
+        "deschain-v2.vercel.app",
+        "deschain-backend.hf.space",
+    ],
 )
 
 

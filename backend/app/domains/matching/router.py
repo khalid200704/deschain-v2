@@ -5,22 +5,21 @@ memilih komposisi grup yang memaksimalkan total penghematan kolektif.
 """
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from app.database import get_db
+from app.limiter import limiter
 from app.security import get_current_user
-from app.models import ProcurementRequest, UMKM, ProcurementGroup, GroupMembership, Vendor
+from app.models import ProcurementRequest, UMKM, ProcurementGroup, GroupMembership, Vendor, User, Notification
+from app.utils.email import send_group_complete_email
 import uuid as _uuid
 
 import structlog
 
 logger = structlog.get_logger()
 router = APIRouter()
-limiter = Limiter(key_func=get_remote_address)
 
 
 def _jaccard(a: str, b: str) -> float:
@@ -59,7 +58,10 @@ def _compute_similarity(req_a, req_b) -> float:
 
 
 def _savings_rate(total_members: int) -> float:
-    """Step-function penghematan kolektif berdasarkan skala grup (model GPO)."""
+    """Step-function penghematan kolektif berdasarkan skala grup.
+    ASUMSI SIMULASI (model GPO): 8–25% sesuai literatur group procurement.
+    Bukan data lapangan — akan dikalibrasi dari data transaksi nyata.
+    """
     if total_members >= 10: return 0.25
     if total_members >= 5:  return 0.20
     if total_members >= 3:  return 0.15
@@ -649,12 +651,16 @@ async def batch_optimize(
 
     # Ambil vendor aktif di kota yang sama, filter kategori (first word match)
     category_kw = body.product_category.split()[0] if body.product_category else ""
+    from sqlalchemy import cast, Text as SAText
     vendors = (
         db.query(Vendor)
         .filter(
             Vendor.city == body.delivery_city,
             Vendor.is_active == True,
-            Vendor.business_category.ilike(f"%{category_kw}%"),
+            (
+                Vendor.business_category.ilike(f"%{category_kw}%") |
+                cast(Vendor.product_categories, SAText).ilike(f"%{category_kw}%")
+            ) if category_kw else True,
         )
         .all()
     )
@@ -693,3 +699,127 @@ async def batch_optimize(
             **result,
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# Group Lifecycle — confirm membership & complete group
+# ---------------------------------------------------------------------------
+
+@router.post("/groups/{group_id}/confirm")
+async def confirm_membership(
+    group_id: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """UMKM mengkonfirmasi keikutsertaan mereka di grup."""
+    umkm = db.query(UMKM).filter(UMKM.user_id == current_user["user_id"]).first()
+    if not umkm:
+        raise HTTPException(status_code=403, detail="Hanya akun UMKM yang dapat mengkonfirmasi")
+
+    try:
+        gid = _uuid.UUID(group_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Grup tidak ditemukan")
+
+    group = db.query(ProcurementGroup).filter(ProcurementGroup.id == gid).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Grup tidak ditemukan")
+
+    membership = db.query(GroupMembership).filter(
+        GroupMembership.group_id == gid,
+        GroupMembership.umkm_id == umkm.id,
+    ).first()
+    if not membership:
+        raise HTTPException(status_code=404, detail="Anda bukan anggota grup ini")
+
+    if membership.status == "confirmed":
+        return {"success": True, "message": "Sudah dikonfirmasi sebelumnya"}
+
+    membership.status = "confirmed"
+
+    # Kalau semua member sudah confirmed, upgrade status grup
+    all_memberships = db.query(GroupMembership).filter(
+        GroupMembership.group_id == gid
+    ).all()
+    if all(m.status == "confirmed" for m in all_memberships):
+        group.status = "confirmed"
+
+    # Notifikasi in-app
+    db.add(Notification(
+        user_id=current_user["user_id"],
+        title="Keanggotaan dikonfirmasi",
+        message=f"Anda berhasil mengkonfirmasi keikutsertaan di {group.group_name}.",
+        notification_type="group_confirmed",
+    ))
+
+    db.commit()
+    logger.info("membership_confirmed", group_id=group_id, umkm_id=str(umkm.id))
+    return {"success": True, "message": "Keikutsertaan berhasil dikonfirmasi"}
+
+
+@router.post("/groups/{group_id}/complete")
+async def complete_group(
+    group_id: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Tandai grup sebagai selesai — barang diterima, pengadaan berhasil."""
+    umkm = db.query(UMKM).filter(UMKM.user_id == current_user["user_id"]).first()
+    if not umkm:
+        raise HTTPException(status_code=403, detail="Hanya akun UMKM yang dapat menyelesaikan grup")
+
+    try:
+        gid = _uuid.UUID(group_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Grup tidak ditemukan")
+
+    group = db.query(ProcurementGroup).filter(ProcurementGroup.id == gid).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Grup tidak ditemukan")
+
+    # Pastikan user adalah anggota grup
+    membership = db.query(GroupMembership).filter(
+        GroupMembership.group_id == gid,
+        GroupMembership.umkm_id == umkm.id,
+    ).first()
+    if not membership:
+        raise HTTPException(status_code=403, detail="Anda bukan anggota grup ini")
+
+    group.status = "completed"
+
+    all_memberships = db.query(GroupMembership).filter(
+        GroupMembership.group_id == gid,
+        GroupMembership.status.in_(["confirmed", "active", "pending"]),
+    ).all()
+
+    for m in all_memberships:
+        m.status = "completed"
+        # Notifikasi in-app untuk setiap anggota
+        member_umkm = db.query(UMKM).filter(UMKM.id == m.umkm_id).first()
+        if member_umkm:
+            savings = (m.individual_budget or 0) * (m.savings_percentage or 0) / 100
+            db.add(Notification(
+                user_id=member_umkm.user_id,
+                title="Pengadaan selesai!",
+                message=(
+                    f"Grup {group.group_name} telah diselesaikan. "
+                    f"Penghematan Anda: Rp {savings:,.0f} ({m.savings_percentage or 0:.0f}%)."
+                ),
+                notification_type="group_completed",
+            ))
+            # Email notification
+            member_user = db.query(User).filter(User.id == member_umkm.user_id).first()
+            if member_user:
+                background_tasks.add_task(
+                    send_group_complete_email,
+                    member_user.email,
+                    member_user.first_name or member_user.email,
+                    group.group_name,
+                    savings,
+                    m.savings_percentage or 0,
+                )
+
+    db.commit()
+    logger.info("group_completed", group_id=group_id, members=len(all_memberships))
+    return {"success": True, "message": f"Grup {group.group_name} berhasil diselesaikan"}

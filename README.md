@@ -9,7 +9,7 @@
 
 **Semifinalis BI-OJK Hackathon 2025 · Innovation Frontier 1 · Peserta PIDI-DIGDAYA X 2026**
 
-> Hemat 15–25% biaya pengadaan UMKM melalui group buying bertenaga AI.
+> Hemat 8–25% biaya pengadaan UMKM melalui group buying bertenaga AI.
 
 ---
 

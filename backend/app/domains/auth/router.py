@@ -2,10 +2,11 @@
 Authentication domain router — register, login, refresh, me
 """
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.limiter import limiter
 from app.security import (
     hash_password,
     verify_password,
@@ -16,6 +17,7 @@ from app.security import (
 )
 from app.models import User
 from app.schemas.models import UserCreate, LoginRequest
+from app.utils.email import send_welcome_email
 
 import structlog
 
@@ -37,7 +39,8 @@ def _user_to_dict(user: User) -> dict:
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+async def register(request: Request, user_data: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """Daftar pengguna baru (UMKM, Vendor, atau Admin)"""
     if db.query(User).filter(User.email == user_data.email).first():
         raise HTTPException(
@@ -58,6 +61,7 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.refresh(user)
 
     logger.info("user_registered", user_id=str(user.id), user_type=user.user_type)
+    background_tasks.add_task(send_welcome_email, user.email, user.first_name, user.user_type)
 
     return {
         "success": True,
@@ -72,7 +76,8 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login")
-async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(request: Request, credentials: LoginRequest, db: Session = Depends(get_db)):
     """Masuk dengan email dan password"""
     user = db.query(User).filter(User.email == credentials.email).first()
 
